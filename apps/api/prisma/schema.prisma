@@ -1,0 +1,440 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RolUsuario {
+  COMPRADOR
+  VENDEDOR
+  ADMIN
+  SOPORTE
+}
+
+enum EstadoVendedor {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  SUSPENDIDO
+}
+
+enum EstadoProducto {
+  BORRADOR
+  ACTIVO
+  PAUSADO
+  ARCHIVADO
+}
+
+enum EstadoOrden {
+  CREADA
+  PAGADA
+  ENVIADA
+  ENTREGADA
+  CANCELADA
+  REEMBOLSADA
+}
+
+enum EstadoPago {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  REEMBOLSADO
+}
+
+enum EstadoEnvio {
+  PENDIENTE
+  ENVIADO
+  ENTREGADO
+}
+
+enum TipoMovimientoInventario {
+  INGRESO
+  EGRESO
+  AJUSTE
+  RESERVA
+  LIBERACION
+}
+
+enum EstadoTicketSoporte {
+  ABIERTO
+  EN_PROCESO
+  RESUELTO
+  CERRADO
+}
+
+model Usuario {
+  id                  String      @id @default(uuid())
+  email            String dasdsa     @unique
+  telefono         String?
+  passwordHash     String
+  rol              RolUsuario  @default(COMPRADOR)
+  nombre           String?
+  apellido         String?
+  creadoEn         DateTime    @default(now())
+  actualizadoEn    DateTime    @updatedAt
+  vendedor         Vendedor?
+  direcciones      Direccion[]
+  ordenes          Orden[]     @relation("OrdenesComprador")
+  resenas          Resena[]
+  externalSystem   String?
+  externalId       String?
+  externalSyncedAt DateTime?
+  externalMeta     Json?
+
+  @@index([rol])
+}
+
+model Direccion {
+  id             String   @id @default(uuid())
+  usuarioId      String
+  nombreCompleto String
+  telefono       String
+  pais           String
+  provincia      String
+  ciudad         String
+  linea1         String
+  linea2         String?
+  creadoEn       DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+}
+
+model Vendedor {
+  id               String          @id @default(uuid())
+  usuarioId        String          @unique
+  nombreTienda     String
+  estado           EstadoVendedor  @default(PENDIENTE)
+  creadoEn         DateTime        @default(now())
+  actualizadoEn    DateTime        @updatedAt
+  usuario          Usuario         @relation(fields: [usuarioId], references: [id])
+  productos        Producto[]
+  ordenes          Orden[]         @relation("OrdenesVendedor")
+  externalSystem   String?
+  externalId       String?
+  externalSyncedAt DateTime?
+  externalMeta     Json?
+
+  @@index([estado])
+}
+
+model Categoria {
+  id        String     @id @default(uuid())
+  nombre    String
+  slug      String     @unique
+  productos Producto[]
+
+  @@index([slug])
+}
+
+model Producto {
+  id               String          @id @default(uuid())
+  vendedorId       String
+  categoriaId      String?
+  titulo           String
+  descripcion      String
+  estado           EstadoProducto  @default(ACTIVO)
+  precioBase       Decimal         @db.Decimal(12, 2)
+  moneda           String          @default("USD")
+  creadoEn         DateTime        @default(now())
+  actualizadoEn    DateTime        @updatedAt
+  vendedor         Vendedor        @relation(fields: [vendedorId], references: [id])
+  categoria        Categoria?      @relation(fields: [categoriaId], references: [id])
+  imagenes         ImagenProducto[]
+  variantes        VarianteProducto[]
+  resenas          Resena[]
+  externalSystem   String?
+  externalId       String?
+  externalSyncedAt DateTime?
+  externalMeta     Json?
+
+  @@index([vendedorId, estado])
+  @@index([categoriaId, estado])
+}
+
+model ImagenProducto {
+  id        String   @id @default(uuid())
+  productoId String
+  url       String
+  orden     Int      @default(0)
+  creadoEn  DateTime @default(now())
+
+  producto Producto @relation(fields: [productoId], references: [id])
+
+  @@index([productoId])
+}
+
+model VarianteProducto {
+  id                   String                @id @default(uuid())
+  productoId           String
+  nombre               String
+  sku                  String?               @unique
+  precio               Decimal?              @db.Decimal(12, 2)
+  stock                Int                   @default(0)
+  creadoEn             DateTime              @default(now())
+  actualizadoEn        DateTime              @updatedAt
+  producto             Producto              @relation(fields: [productoId], references: [id])
+  inventarioMovimientos InventarioMovimiento[]
+  reservas             ReservaStock[]
+
+  @@index([productoId])
+}
+
+model Orden {
+  id               String         @id @default(uuid())
+  compradorId      String
+  vendedorId       String
+  estado           EstadoOrden    @default(CREADA)
+  subtotal         Decimal        @db.Decimal(12, 2)
+  comision         Decimal        @db.Decimal(12, 2)
+  total            Decimal        @db.Decimal(12, 2)
+  moneda           String         @default("USD")
+  creadoEn         DateTime       @default(now())
+  actualizadoEn    DateTime       @updatedAt
+  comprador        Usuario        @relation("OrdenesComprador", fields: [compradorId], references: [id])
+  vendedor         Vendedor       @relation("OrdenesVendedor", fields: [vendedorId], references: [id])
+  items            ItemOrden[]
+  pago             Pago?
+  envio            Envio?
+  chatConversacion ChatConversacion?
+  factura          Factura?
+  externalSystem   String?
+  externalId       String?
+  externalSyncedAt DateTime?
+  externalMeta     Json?
+
+  @@index([compradorId, creadoEn])
+  @@index([vendedorId, creadoEn])
+  @@index([estado, creadoEn])
+}
+
+model ItemOrden {
+  id                    String           @id @default(uuid())
+  ordenId               String
+  productoId            String
+  varianteId            String?
+  cantidad              Int
+  tituloSnapshot        String
+  skuSnapshot           String?
+  precioUnitarioSnapshot Decimal        @db.Decimal(12, 2)
+  monedaSnapshot        String          @default("USD")
+  orden                 Orden           @relation(fields: [ordenId], references: [id])
+  producto              Producto        @relation(fields: [productoId], references: [id])
+  variante              VarianteProducto? @relation(fields: [varianteId], references: [id])
+
+  @@index([ordenId])
+  @@index([productoId])
+}
+
+model Pago {
+  id                    String           @id @default(uuid())
+  ordenId               String           @unique
+  estado                EstadoPago       @default(PENDIENTE)
+  monto                 Decimal          @db.Decimal(12, 2)
+  moneda                String           @default("USD")
+  stripePaymentIntentId String?
+  stripeCustomerId      String?
+  creadoEn              DateTime         @default(now())
+  actualizadoEn         DateTime         @updatedAt
+  orden                 Orden            @relation(fields: [ordenId], references: [id])
+  intentos              PaymentAttempt[]
+  reembolsos            Refund[]
+  externalSystem        String?
+  externalId            String?
+  externalSyncedAt      DateTime?
+  externalMeta          Json?
+}
+
+model PaymentAttempt {
+  id               String   @id @default(uuid())
+  pagoId           String
+  provider         String   @default("STRIPE")
+  providerIntentId String?
+  estado           String
+  raw              Json?
+  creadoEn         DateTime @default(now())
+
+  pago Pago @relation(fields: [pagoId], references: [id])
+
+  @@index([pagoId])
+  @@index([providerIntentId])
+}
+
+model Refund {
+  id             String   @id @default(uuid())
+  pagoId         String
+  monto          Decimal  @db.Decimal(12, 2)
+  moneda         String   @default("USD")
+  stripeRefundId String?
+  estado         String
+  raw            Json?
+  creadoEn       DateTime @default(now())
+
+  pago Pago @relation(fields: [pagoId], references: [id])
+
+  @@index([pagoId])
+  @@index([stripeRefundId])
+}
+
+model StripeEvent {
+  id         String   @id @default(uuid())
+  eventId    String   @unique
+  tipo       String
+  payload    Json
+  recibidoEn DateTime @default(now())
+}
+
+model Envio {
+  id               String       @id @default(uuid())
+  ordenId          String       @unique
+  transportista    String?
+  codigoTracking   String?
+  estado           EstadoEnvio  @default(PENDIENTE)
+  creadoEn         DateTime     @default(now())
+  actualizadoEn    DateTime     @updatedAt
+  orden            Orden        @relation(fields: [ordenId], references: [id])
+  eventos          EnvioEvento[]
+  externalSystem   String?
+  externalId       String?
+  externalSyncedAt DateTime?
+  externalMeta     Json?
+}
+
+model EnvioEvento {
+  id          String   @id @default(uuid())
+  envioId     String
+  codigo      String
+  descripcion String?
+  ocurridoEn  DateTime
+  raw         Json?
+
+  envio Envio @relation(fields: [envioId], references: [id])
+
+  @@index([envioId, ocurridoEn])
+}
+
+model InventarioMovimiento {
+  id        String                   @id @default(uuid())
+  varianteId String
+  tipo      TipoMovimientoInventario
+  cantidad  Int
+  motivo    String?
+  creadoEn  DateTime @default(now())
+
+  variante VarianteProducto @relation(fields: [varianteId], references: [id])
+
+  @@index([varianteId, creadoEn])
+}
+
+model ReservaStock {
+  id         String   @id @default(uuid())
+  varianteId String
+  ordenId    String
+  cantidad   Int
+  creadoEn   DateTime @default(now())
+  liberadoEn DateTime?
+
+  variante VarianteProducto @relation(fields: [varianteId], references: [id])
+  orden    Orden            @relation(fields: [ordenId], references: [id])
+
+  @@unique([varianteId, ordenId])
+  @@index([ordenId])
+}
+
+model ChatConversacion {
+  id            String        @id @default(uuid())
+  ordenId       String        @unique
+  creadoEn      DateTime      @default(now())
+  actualizadoEn DateTime      @updatedAt
+  orden         Orden         @relation(fields: [ordenId], references: [id])
+  mensajes      ChatMensaje[]
+}
+
+model ChatMensaje {
+  id            String   @id @default(uuid())
+  conversacionId String
+  autorUsuarioId String
+  contenido      String
+  creadoEn       DateTime @default(now())
+
+  conversacion ChatConversacion @relation(fields: [conversacionId], references: [id])
+
+  @@index([conversacionId, creadoEn])
+}
+
+model Resena {
+  id          String   @id @default(uuid())
+  productoId  String
+  compradorId String
+  ordenId     String
+  calificacion Int
+  comentario  String?
+  creadoEn    DateTime @default(now())
+
+  producto  Producto @relation(fields: [productoId], references: [id])
+  comprador Usuario  @relation(fields: [compradorId], references: [id])
+  orden     Orden    @relation(fields: [ordenId], references: [id])
+
+  @@unique([productoId, compradorId, ordenId])
+  @@index([productoId, creadoEn])
+}
+
+model Factura {
+  id               String   @id @default(uuid())
+  ordenId          String   @unique
+  numero           String   @unique
+  fechaEmision     DateTime @default(now())
+  subtotal         Decimal  @db.Decimal(12, 2)
+  impuestos        Decimal  @db.Decimal(12, 2) @default(0)
+  total            Decimal  @db.Decimal(12, 2)
+  moneda           String   @default("USD")
+  orden            Orden    @relation(fields: [ordenId], references: [id])
+  items            FacturaItem[]
+  externalSystem   String?
+  externalId       String?
+  externalSyncedAt DateTime?
+  externalMeta     Json?
+}
+
+model FacturaItem {
+  id            String  @id @default(uuid())
+  facturaId     String
+  descripcion   String
+  cantidad      Int
+  precioUnitario Decimal @db.Decimal(12, 2)
+  total         Decimal @db.Decimal(12, 2)
+
+  factura Factura @relation(fields: [facturaId], references: [id])
+
+  @@index([facturaId])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  actorUsuarioId String?
+  accion        String
+  entidad       String
+  entidadId     String?
+  detalle       Json?
+  creadoEn      DateTime @default(now())
+
+  @@index([actorUsuarioId, creadoEn])
+  @@index([entidad, creadoEn])
+}
+
+model TicketSoporte {
+  id              String               @id @default(uuid())
+  creadorUsuarioId String
+  estado          EstadoTicketSoporte  @default(ABIERTO)
+  asunto          String
+  descripcion     String?
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
+
+  @@index([creadorUsuarioId, creadoEn])
+  @@index([estado, creadoEn])
+}
