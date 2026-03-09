@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { JwtStrategy } from './strategies/jwt.strategy'
+import type { StringValue } from 'ms'  // 👈 importa el tipo
 
 @Module({
   imports: [
@@ -12,9 +13,9 @@ import { JwtStrategy } from './strategies/jwt.strategy'
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('auth.jwtSecret'),
+        secret: configService.getOrThrow<string>('auth.jwtSecret'),
         signOptions: {
-          expiresIn: configService.get<string>('auth.jwtExpiresIn')
+          expiresIn: configService.getOrThrow<string>('auth.jwtExpiresIn') as StringValue  // 👈
         }
       })
     })

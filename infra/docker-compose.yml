@@ -3,6 +3,8 @@ services:
     build: ../apps/api
     env_file:
       - ../.env
+    environment:
+      - "DATABASE_URL=postgresql://marketplace:marketplace@postgres:5432/marketplace?schema=public"
     depends_on:
       - postgres
       - redis
@@ -53,3 +55,5 @@ services:
 
 volumes:
   pgdata:
+
+   
