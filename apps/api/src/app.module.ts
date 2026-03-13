@@ -13,6 +13,8 @@ import { UsersModule } from './modules/users/users.module'
 import { SellersModule } from './modules/sellers/sellers.module'
 import { CategoriesModule } from './modules/categories/categories.module'
 import { ProductsModule } from './modules/products/products.module'
+import { OrdersModule } from './modules/orders/orders.module'
+import { PaymentsModule } from './modules/payments/payments.module'
 
 @Module({
   imports: [
@@ -27,7 +29,9 @@ import { ProductsModule } from './modules/products/products.module'
     UsersModule,
     SellersModule
     ,CategoriesModule,
-    ProductsModule
+    ProductsModule,
+    OrdersModule,
+    PaymentsModule
   ],
   providers: [
     {

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { apiFetch } from 'lib/api'
+import { apiFetch } from '../../lib/api'
 
 type ImagenProducto = {
   id: string
@@ -38,10 +38,10 @@ export default async function ProductosPage() {
       <h1 className="mb-6 text-3xl font-bold">Productos</h1>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {productos.map((producto) => (
+        {productos.map((producto: Producto) => (
           <article
             key={producto.id}
-            className="overflow-hidden rounded-2xl border border-slate-200"
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
           >
             <div className="aspect-[4/3] bg-slate-100">
               {producto.imagenes[0]?.url ? (
@@ -51,7 +51,11 @@ export default async function ProductosPage() {
                   alt={producto.titulo}
                   className="h-full w-full object-cover"
                 />
-              ) : null}
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                  Sin imagen
+                </div>
+              )}
             </div>
 
             <div className="p-5">

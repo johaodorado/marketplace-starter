@@ -1,4 +1,5 @@
-import { apiFetch } from 'lib/api'
+import AddToCartButton from '../../../components/add-to-cart-button'
+import { apiFetch } from '../../../lib/api'
 
 type ImagenProducto = {
   id: string
@@ -20,12 +21,6 @@ type Categoria = {
   slug: string
 }
 
-type Vendedor = {
-  id: string
-  nombreTienda: string
-  estado: string
-}
-
 type Producto = {
   id: string
   titulo: string
@@ -35,7 +30,6 @@ type Producto = {
   imagenes: ImagenProducto[]
   variantes: Variante[]
   categoria: Categoria | null
-  vendedor: Vendedor
 }
 
 export default async function ProductoDetallePage({
@@ -46,18 +40,23 @@ export default async function ProductoDetallePage({
   const { id } = await params
   const producto = await apiFetch<Producto>(`/products/${id}`)
 
+  const mainImage = producto.imagenes[0]?.url ?? null
+
   return (
     <main className="mx-auto grid max-w-6xl gap-10 px-6 py-12 md:grid-cols-2">
       <div className="space-y-4">
         <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
-          {producto.imagenes[0]?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
+          {mainImage ? (
             <img
-              src={producto.imagenes[0].url}
+              src={mainImage}
               alt={producto.titulo}
               className="h-full w-full object-cover"
             />
-          ) : null}
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-slate-400">
+              Sin imagen
+            </div>
+          )}
         </div>
       </div>
 
@@ -74,27 +73,47 @@ export default async function ProductoDetallePage({
           {producto.moneda} {producto.precioBase}
         </p>
 
-        <p className="mt-2 text-sm text-slate-500">
-          Vendedor: {producto.vendedor.nombreTienda}
-        </p>
-
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Variantes</h2>
 
           <div className="mt-4 space-y-3">
-            {producto.variantes.map((variante) => (
-              <div
-                key={variante.id}
-                className="rounded-xl border border-slate-200 p-4"
-              >
-                <p className="font-medium">{variante.nombre}</p>
-                <p className="text-sm text-slate-500">SKU: {variante.sku ?? 'N/A'}</p>
-                <p className="text-sm text-slate-500">Stock: {variante.stock}</p>
-                <p className="text-sm font-semibold">
-                  Precio: {producto.moneda} {variante.precio ?? producto.precioBase}
-                </p>
-              </div>
-            ))}
+            {producto.variantes.length > 0 ? (
+              producto.variantes.map((variante: Variante) => {
+                const precioFinal = variante.precio ?? producto.precioBase
+
+                return (
+                  <div
+                    key={variante.id}
+                    className="rounded-xl border border-slate-200 p-4"
+                  >
+                    <p className="font-medium">{variante.nombre}</p>
+                    <p className="text-sm text-slate-500">
+                      SKU: {variante.sku ?? 'N/A'}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      Stock: {variante.stock}
+                    </p>
+                    <p className="text-sm font-semibold">
+                      Precio: {producto.moneda} {precioFinal}
+                    </p>
+
+                    <AddToCartButton
+                      productId={producto.id}
+                      variantId={variante.id}
+                      titulo={producto.titulo}
+                      varianteNombre={variante.nombre}
+                      precio={precioFinal}
+                      moneda={producto.moneda}
+                      imagenUrl={mainImage}
+                    />
+                  </div>
+                )
+              })
+            ) : (
+              <p className="text-sm text-slate-500">
+                Este producto no tiene variantes.
+              </p>
+            )}
           </div>
         </section>
       </div>
