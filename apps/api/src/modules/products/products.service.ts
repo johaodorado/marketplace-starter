@@ -509,4 +509,193 @@ async listStockMovements(usuarioId: string, productId: string, variantId: string
     }
   })
 }
+
+private async getStoreSellerId() {
+  const seller = await this.prisma.vendedor.findFirst({
+    where: {
+      estado: EstadoVendedor.APROBADO,
+    },
+    orderBy: {
+      creadoEn: 'asc',
+    },
+  })
+
+  if (!seller) {
+    throw new NotFoundException(
+      'No existe un vendedor base aprobado para la tienda',
+    )
+  }
+
+  return seller.id
+}
+
+async listAdmin() {
+  return this.prisma.producto.findMany({
+    orderBy: {
+      creadoEn: 'desc',
+    },
+    include: {
+      categoria: true,
+      imagenes: true,
+      variantes: true,
+    },
+  })
+}
+
+async createAdmin(dto: CreateProductDto) {
+  const sellerId = await this.getStoreSellerId()
+
+  if (dto.categoriaId) {
+    const category = await this.prisma.categoria.findUnique({
+      where: { id: dto.categoriaId },
+    })
+
+    if (!category) {
+      throw new NotFoundException('Categoría no encontrada')
+    }
+  }
+
+  return this.prisma.producto.create({
+    data: {
+      vendedorId: sellerId,
+      categoriaId: dto.categoriaId,
+      titulo: dto.titulo,
+      descripcion: dto.descripcion,
+      precioBase: dto.precioBase,
+      moneda: dto.moneda ?? 'USD',
+      estado: EstadoProducto.BORRADOR,
+    },
+    include: {
+      categoria: true,
+      imagenes: true,
+      variantes: true,
+    },
+  })
+}
+
+async addImageAdmin(productId: string, dto: AddProductImageDto) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  return this.prisma.imagenProducto.create({
+    data: {
+      productoId: productId,
+      url: dto.url,
+      orden: dto.orden ?? 0,
+    },
+  })
+}
+
+async addVariantAdmin(productId: string, dto: CreateProductVariantDto) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  if (dto.sku) {
+    const existingSku = await this.prisma.varianteProducto.findUnique({
+      where: { sku: dto.sku },
+    })
+
+    if (existingSku) {
+      throw new ConflictException('Ya existe una variante con ese SKU')
+    }
+  }
+
+  return this.prisma.varianteProducto.create({
+    data: {
+      productoId: productId,
+      nombre: dto.nombre,
+      sku: dto.sku,
+      precio: dto.precio,
+      stock: 0,
+    },
+  })
+}
+
+async adjustStockAdmin(productId: string, variantId: string, dto: AdjustStockDto) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  const variant = await this.prisma.varianteProducto.findFirst({
+    where: {
+      id: variantId,
+      productoId: productId,
+    },
+  })
+
+  if (!variant) {
+    throw new NotFoundException('Variante no encontrada')
+  }
+
+  const nuevoStock = variant.stock + dto.cantidad
+
+  if (nuevoStock < 0) {
+    throw new ForbiddenException('Stock insuficiente para realizar el ajuste')
+  }
+
+  const tipo =
+    dto.cantidad > 0
+      ? TipoMovimientoInventario.INGRESO
+      : TipoMovimientoInventario.EGRESO
+
+  return this.prisma.$transaction(async (tx) => {
+    const updatedVariant = await tx.varianteProducto.update({
+      where: { id: variantId },
+      data: {
+        stock: nuevoStock,
+      },
+    })
+
+    await tx.inventarioMovimiento.create({
+      data: {
+        varianteId: variantId,
+        tipo,
+        cantidad: Math.abs(dto.cantidad),
+        motivo: dto.motivo,
+      },
+    })
+
+    return updatedVariant
+  })
+}
+
+async updateStatusAdmin(id: string, dto: UpdateProductStatusDto) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  return this.prisma.producto.update({
+    where: { id },
+    data: {
+      estado: dto.estado,
+    },
+    include: {
+      categoria: true,
+      imagenes: true,
+      variantes: true,
+    },
+  })
+}
+
+
+
+
 }

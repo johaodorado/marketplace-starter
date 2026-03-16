@@ -108,30 +108,31 @@ export default function CuentaPage() {
           </div>
 
           {user?.rol === 'ADMIN' ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold">Administración</h2>
-              <p className="mt-2 text-slate-600">
-                Revisa pagos reportados y valida transferencias.
-              </p>
+            
+<div className="mt-4 flex flex-wrap gap-3">
+  <Link
+    href="/admin/pagos"
+    className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+  >
+    Ir a pagos admin
+  </Link>
 
-              <Link
-                href="/admin/pagos"
-                className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-2 text-white"
-              >
-                Ir a pagos admin
-              </Link>
+  <Link
+    href="/admin/ordenes"
+    className="rounded-xl border border-slate-300 px-4 py-2"
+  >
+    Ver órdenes admin
+  </Link>
+
+  <Link
+    href="/admin/productos"
+    className="rounded-xl border border-slate-300 px-4 py-2"
+  >
+    Ver productos admin
+  </Link>
+</div>
 
 
-              <Link
-  href="/admin/ordenes"
-  className="mt-4 ml-3 inline-block rounded-xl border border-slate-300 px-4 py-2"
->
-  Ver órdenes admin
-</Link>
-
-
-
-            </div>
           ) : null}
         </div>
       ) : null}

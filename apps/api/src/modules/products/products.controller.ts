@@ -8,7 +8,9 @@ import { AddProductImageDto } from './dto/add-product-image.dto'
 import { CreateProductVariantDto } from './dto/create-product-variant.dto'
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto'
 import { AdjustStockDto } from './dto/adjust-stock.dto'
-
+import { RolUsuario } from '@prisma/client'
+import { Roles } from '../../common/decorators/roles.decorator'
+import { RolesGuard } from '../../common/guards/roles.guard'
 @Controller()
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
@@ -99,6 +101,57 @@ listStockMovements(
   @Param('variantId') variantId: string
 ) {
   return this.productsService.listStockMovements(req.user.sub, id, variantId)
+}
+
+
+
+@Get('admin/products')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
+listAdmin() {
+  return this.productsService.listAdmin()
+}
+
+@Post('admin/products')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
+createAdmin(@Body() dto: CreateProductDto) {
+  return this.productsService.createAdmin(dto)
+}
+
+@Post('admin/products/:id/images')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
+addImageAdmin(@Param('id') id: string, @Body() dto: AddProductImageDto) {
+  return this.productsService.addImageAdmin(id, dto)
+}
+
+@Post('admin/products/:id/variants')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
+addVariantAdmin(@Param('id') id: string, @Body() dto: CreateProductVariantDto) {
+  return this.productsService.addVariantAdmin(id, dto)
+}
+
+@Post('admin/products/:id/variants/:variantId/stock')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
+adjustStockAdmin(
+  @Param('id') id: string,
+  @Param('variantId') variantId: string,
+  @Body() dto: AdjustStockDto,
+) {
+  return this.productsService.adjustStockAdmin(id, variantId, dto)
+}
+
+@Patch('admin/products/:id/status')
+@UseGuards(JwtGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
+updateStatusAdmin(
+  @Param('id') id: string,
+  @Body() dto: UpdateProductStatusDto,
+) {
+  return this.productsService.updateStatusAdmin(id, dto)
 }
 
 }
