@@ -47,7 +47,7 @@ export default function AddToCartButton({
     <button
       type="button"
       onClick={handleAdd}
-      className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-white"
+      className="btn-product btn-product-small"
     >
       {added ? 'Agregado' : 'Agregar al carrito'}
     </button>

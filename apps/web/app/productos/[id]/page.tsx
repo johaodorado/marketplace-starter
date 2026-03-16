@@ -43,57 +43,49 @@ export default async function ProductoDetallePage({
   const mainImage = producto.imagenes[0]?.url ?? null
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-10 px-6 py-12 md:grid-cols-2">
-      <div className="space-y-4">
-        <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
-          {mainImage ? (
-            <img
-              src={mainImage}
-              alt={producto.titulo}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-slate-400">
-              Sin imagen
+    <main className="page product-detail-page">
+      <section className="product-detail-container">
+        <header className="product-header">
+          <div className="product-image-container">
+            {mainImage ? (
+              <img src={mainImage} alt={producto.titulo} />
+            ) : (
+              <img src="/img/icon/logo-kamilnova.png" alt={producto.titulo} />
+            )}
+          </div>
+
+          <div className="product-info">
+            <p className="product-category">
+              {producto.categoria?.nombre ?? 'Sin categoria'}
+            </p>
+            <h1 className="product-title">{producto.titulo}</h1>
+            <p className="product-description">{producto.descripcion}</p>
+            <div className="product-prices">
+              <span className="price-badge">
+                {producto.moneda} {producto.precioBase}
+              </span>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </header>
 
-      <div>
-        <p className="text-sm text-slate-500">
-          {producto.categoria?.nombre ?? 'Sin categoría'}
-        </p>
-
-        <h1 className="mt-2 text-3xl font-bold">{producto.titulo}</h1>
-
-        <p className="mt-4 text-slate-600">{producto.descripcion}</p>
-
-        <p className="mt-6 text-2xl font-bold">
-          {producto.moneda} {producto.precioBase}
-        </p>
-
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">Variantes</h2>
-
-          <div className="mt-4 space-y-3">
+        <section className="product-details">
+          <div className="product-section">
+            <span className="section-badge">Variantes</span>
+            <div className="variants-list">
             {producto.variantes.length > 0 ? (
               producto.variantes.map((variante: Variante) => {
                 const precioFinal = variante.precio ?? producto.precioBase
 
                 return (
-                  <div
-                    key={variante.id}
-                    className="rounded-xl border border-slate-200 p-4"
-                  >
-                    <p className="font-medium">{variante.nombre}</p>
-                    <p className="text-sm text-slate-500">
+                  <article key={variante.id} className="variant-card">
+                    <p className="variant-title">{variante.nombre}</p>
+                    <p className="variant-meta">
                       SKU: {variante.sku ?? 'N/A'}
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className="variant-meta">
                       Stock: {variante.stock}
                     </p>
-                    <p className="text-sm font-semibold">
+                    <p className="variant-price">
                       Precio: {producto.moneda} {precioFinal}
                     </p>
 
@@ -106,17 +98,22 @@ export default async function ProductoDetallePage({
                       moneda={producto.moneda}
                       imagenUrl={mainImage}
                     />
-                  </div>
+                  </article>
                 )
               })
             ) : (
-              <p className="text-sm text-slate-500">
+              <p className="section-text">
                 Este producto no tiene variantes.
               </p>
             )}
+            </div>
           </div>
         </section>
-      </div>
+
+        <div className="back-link">
+          <a href="/productos">Volver a productos</a>
+        </div>
+      </section>
     </main>
   )
 }
