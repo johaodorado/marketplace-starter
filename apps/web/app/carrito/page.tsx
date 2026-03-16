@@ -7,13 +7,16 @@ import {
   getCart,
   removeFromCart,
   updateCartItemQuantity,
+  clearCart,
 } from '../../lib/cart'
 
 export default function CarritoPage() {
   const [items, setItems] = useState<CartItem[]>([])
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setItems(getCart())
+    setMounted(true)
   }, [])
 
   function handleRemove(variantId: string) {
@@ -22,98 +25,184 @@ export default function CarritoPage() {
   }
 
   function handleQuantityChange(variantId: string, cantidad: number) {
-    updateCartItemQuantity(variantId, cantidad)
-    setItems(getCart())
+    if (cantidad > 0) {
+      updateCartItemQuantity(variantId, cantidad)
+      setItems(getCart())
+    }
+  }
+
+  function handleClearCart() {
+    if (confirm('¿Estás seguro de que deseas vaciar el carrito?')) {
+      clearCart()
+      setItems([])
+    }
   }
 
   const total = useMemo(() => {
     return items.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
   }, [items])
 
-  return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="mb-6 text-3xl font-bold">Carrito</h1>
+  const subtotal = useMemo(() => {
+    return total
+  }, [total])
 
-      {items.length === 0 ? (
+  const impuestos = useMemo(() => {
+    return Number((subtotal * 0.08).toFixed(2))
+  }, [subtotal])
+
+  const totalConImpuestos = useMemo(() => {
+    return Number((subtotal + impuestos).toFixed(2))
+  }, [subtotal, impuestos])
+
+  if (!mounted) {
+    return (
+      <main className="mx-auto max-w-5xl px-6 py-12">
+        <h1 className="mb-6 text-3xl font-bold">Carrito</h1>
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-600">Tu carrito está vacío.</p>
-
-          <Link
-            href="/productos"
-            className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-2 text-white"
-          >
-            Ver productos
-          </Link>
+          <p className="text-slate-600">Cargando carrito...</p>
         </div>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-4">
-            {items.map((item) => (
-              <div
-                key={item.variantId}
-                className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4"
-              >
-                <div className="h-24 w-24 overflow-hidden rounded-xl bg-slate-100">
-                  {item.imagenUrl ? (
-                    <img
-                      src={item.imagenUrl}
-                      alt={item.titulo}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
-                </div>
+      </main>
+    )
+  }
 
-                <div className="flex-1">
-                  <h2 className="font-semibold">{item.titulo}</h2>
-                  <p className="text-sm text-slate-500">{item.varianteNombre}</p>
-                  <p className="mt-1 text-sm font-medium">
-                    {item.moneda} {item.precio}
-                  </p>
+  return (
+    <main className="page">
+      <section className="cart-page-section">
+        <div className="cart-header">
+          <h1>Mi Carrito</h1>
+          <p className="cart-item-count">
+            {items.length} {items.length === 1 ? 'artículo' : 'artículos'}
+          </p>
+        </div>
 
-                  <div className="mt-3 flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={1}
-                      value={item.cantidad}
-                      onChange={(e) =>
-                        handleQuantityChange(
-                          item.variantId,
-                          Number(e.target.value || 1),
-                        )
-                      }
-                      className="w-20 rounded-xl border border-slate-300 px-3 py-2"
-                    />
+        {items.length === 0 ? (
+          <div className="cart-empty">
+            <p className="empty-state">Tu carrito está vacío</p>
+
+            <Link href="/productos" className="btn-product">
+              Continuar comprando
+            </Link>
+          </div>
+        ) : (
+          <div className="cart-container">
+            <div className="cart-items-container">
+              {items.map((item) => (
+                <article
+                  key={item.variantId}
+                  className="cart-item-card"
+                >
+                  <div className="cart-item-image">
+                    {item.imagenUrl ? (
+                      <img
+                        src={item.imagenUrl}
+                        alt={item.titulo}
+                      />
+                    ) : (
+                      <div className="image-placeholder">
+                        <span>Sin imagen</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="cart-item-details">
+                    <h2 className="product-name">{item.titulo}</h2>
+                    <p className="product-variant">{item.varianteNombre}</p>
+                    <p className="product-price">
+                      {item.moneda} {item.precio}
+                    </p>
+                  </div>
+
+                  <div className="cart-item-controls">
+                    <div className="quantity-control">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleQuantityChange(item.variantId, item.cantidad - 1)
+                        }
+                        className="qty-btn"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.cantidad}
+                        onChange={(e) =>
+                          handleQuantityChange(
+                            item.variantId,
+                            Number(e.target.value || 1),
+                          )
+                        }
+                        className="qty-input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleQuantityChange(item.variantId, item.cantidad + 1)
+                        }
+                        className="qty-btn"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <p className="item-subtotal">
+                      {item.moneda} {(item.precio * item.cantidad).toFixed(2)}
+                    </p>
 
                     <button
                       type="button"
                       onClick={() => handleRemove(item.variantId)}
-                      className="text-sm text-red-600"
+                      className="btn-remove"
                     >
-                      Eliminar
+                      Quitar
                     </button>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="text-xl font-semibold">Resumen</h2>
-
-            <div className="mt-4 flex items-center justify-between">
-              <span>Total</span>
-              <span className="text-lg font-bold">USD {total.toFixed(2)}</span>
+                </article>
+              ))}
             </div>
 
-            <Link
-              href="/checkout"
-              className="mt-6 block rounded-xl bg-slate-900 px-4 py-3 text-center text-white"
-            >
-              Continuar al checkout
-            </Link>
-          </aside>
-        </div>
-      )}
+            <aside className="cart-summary-sidebar">
+              <h2 className="summary-title">Resumen de Orden</h2>
+
+              <div className="summary-lines">
+                <div className="summary-line">
+                  <span>Subtotal</span>
+                  <span>{items[0]?.moneda ?? 'USD'} {subtotal.toFixed(2)}</span>
+                </div>
+                <div className="summary-line">
+                  <span>Impuestos (8%)</span>
+                  <span>{items[0]?.moneda ?? 'USD'} {impuestos.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="summary-line summary-total">
+                <span>Total</span>
+                <span>{items[0]?.moneda ?? 'USD'} {totalConImpuestos.toFixed(2)}</span>
+              </div>
+
+              <Link
+                href="/checkout"
+                className="btn-checkout"
+              >
+                Ir a Checkout
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleClearCart}
+                className="btn-clear-cart"
+              >
+                Vaciar Carrito
+              </button>
+
+              <Link href="/productos" className="back-to-products">
+                ← Continuar comprando
+              </Link>
+            </aside>
+          </div>
+        )}
+      </section>
     </main>
   )
 }

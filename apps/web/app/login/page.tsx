@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -10,10 +11,45 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const isEmailValid = /^\S+@\S+\.\S+$/.test(email)
+  const isPasswordValid = password.length >= 8
+  const canSubmit = isEmailValid && isPasswordValid && !loading
+
+  async function parseApiError(response: Response, fallback: string) {
+    try {
+      const data = await response.json()
+      const message = data?.message
+
+      if (Array.isArray(message)) {
+        return message.join(' ')
+      }
+
+      if (typeof message === 'string' && message.trim().length > 0) {
+        return message
+      }
+    } catch {
+      // Ignore parsing error and use fallback message.
+    }
+
+    return fallback
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+
+    if (!isEmailValid) {
+      setError('Ingresa un correo valido.')
+      return
+    }
+
+    if (!isPasswordValid) {
+      setError('La contrasena debe tener al menos 8 caracteres.')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -23,20 +59,21 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Credenciales incorrectas')
+        const message = await parseApiError(response, 'Credenciales invalidas.')
+        throw new Error(message)
       }
 
       const data = await response.json()
 
       localStorage.setItem('accessToken', data.accessToken)
 
-      router.push('/')
+      router.push('/cuenta')
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión')
@@ -46,47 +83,68 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-12">
-      <h1 className="mb-6 text-3xl font-bold">Iniciar sesión</h1>
+    <main className="auth-page-shell">
+      <section className="auth-card">
+        <header className="auth-card-header">
+          <p className="auth-eyebrow">Bienvenido de nuevo</p>
+          <h1>Iniciar sesion</h1>
+          <p>Accede para ver tu cuenta, tus pedidos y el estado de tus compras.</p>
+        </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <div>
-          <label className="mb-2 block text-sm font-medium">Correo</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            placeholder="correo@ejemplo.com"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
+          <div className="auth-field">
+            <label htmlFor="email">Correo</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+              autoComplete="email"
+              required
+            />
+            {email.length > 0 && !isEmailValid ? (
+              <small>Usa un formato de correo valido.</small>
+            ) : null}
+          </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">Contraseña</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
-            placeholder="Tu contraseña"
-          />
-        </div>
+          <div className="auth-field">
+            <label htmlFor="password">Contrasena</label>
+            <div className="auth-password-wrap">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Tu contrasena"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="auth-toggle"
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                {showPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+            {password.length > 0 && !isPasswordValid ? (
+              <small>Minimo 8 caracteres.</small>
+            ) : null}
+          </div>
 
-        {error ? (
-          <p className="text-sm text-red-600">{error}</p>
-        ) : null}
+          {error ? <p className="auth-error">{error}</p> : null}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-xl bg-slate-900 px-4 py-3 text-white disabled:opacity-60"
-        >
-          {loading ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
+          <button type="submit" disabled={!canSubmit} className="auth-submit">
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+
+        <footer className="auth-footer">
+          <span>No tienes cuenta?</span>
+          <Link href="/registro">Crear cuenta</Link>
+        </footer>
+      </section>
     </main>
   )
 }

@@ -4,6 +4,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import AuthNav from './auth-nav'
 
 export default function SiteHeader() {
   const pathname = usePathname()
@@ -23,9 +24,11 @@ export default function SiteHeader() {
 
   const links = [
     { href: '/', label: 'Inicio' },
+    { href: '/categorias', label: 'Categorias' },
     { href: '/productos', label: 'Productos' },
     { href: '/nosotros', label: 'Sobre Nosotros' },
     { href: '/contactos', label: 'Contacto' },
+    { href: '/cuenta', label: 'Mi cuenta' },
   ]
 
   return (
@@ -72,7 +75,26 @@ export default function SiteHeader() {
                 Carrito
               </Link>
             </li>
+            <li className="mobile-only">
+              <Link href="/login" onClick={() => setMenuOpen(false)}>
+                Iniciar sesion
+              </Link>
+            </li>
+            <li className="mobile-only">
+              <Link href="/registro" onClick={() => setMenuOpen(false)}>
+                Registrarse
+              </Link>
+            </li>
+            <li className="mobile-only">
+              <Link href="/admin/pagos" onClick={() => setMenuOpen(false)}>
+                Admin
+              </Link>
+            </li>
           </ul>
+        </div>
+
+        <div className="header-auth">
+          <AuthNav />
         </div>
       </div>
     </header>

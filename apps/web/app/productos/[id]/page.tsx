@@ -30,6 +30,11 @@ type Producto = {
   imagenes: ImagenProducto[]
   variantes: Variante[]
   categoria: Categoria | null
+  externalMeta?: {
+    instrucciones?: string[]
+    almacenamiento?: string
+    nota?: string
+  } | null
 }
 
 export default async function ProductoDetallePage({
@@ -72,42 +77,67 @@ export default async function ProductoDetallePage({
           <div className="product-section">
             <span className="section-badge">Variantes</span>
             <div className="variants-list">
-            {producto.variantes.length > 0 ? (
-              producto.variantes.map((variante: Variante) => {
-                const precioFinal = variante.precio ?? producto.precioBase
+              {producto.variantes.length > 0 ? (
+                producto.variantes.map((variante: Variante) => {
+                  const precioFinal = variante.precio ?? producto.precioBase
 
-                return (
-                  <article key={variante.id} className="variant-card">
-                    <p className="variant-title">{variante.nombre}</p>
-                    <p className="variant-meta">
-                      SKU: {variante.sku ?? 'N/A'}
-                    </p>
-                    <p className="variant-meta">
-                      Stock: {variante.stock}
-                    </p>
-                    <p className="variant-price">
-                      Precio: {producto.moneda} {precioFinal}
-                    </p>
+                  return (
+                    <article key={variante.id} className="variant-card">
+                      <p className="variant-title">{variante.nombre}</p>
+                      <p className="variant-meta">
+                        SKU: {variante.sku ?? 'N/A'}
+                      </p>
+                      <p className="variant-meta">
+                        Stock: {variante.stock}
+                      </p>
+                      <p className="variant-price">
+                        Precio: {producto.moneda} {precioFinal}
+                      </p>
 
-                    <AddToCartButton
-                      productId={producto.id}
-                      variantId={variante.id}
-                      titulo={producto.titulo}
-                      varianteNombre={variante.nombre}
-                      precio={precioFinal}
-                      moneda={producto.moneda}
-                      imagenUrl={mainImage}
-                    />
-                  </article>
-                )
-              })
-            ) : (
-              <p className="section-text">
-                Este producto no tiene variantes.
-              </p>
-            )}
+                      <AddToCartButton
+                        productId={producto.id}
+                        variantId={variante.id}
+                        titulo={producto.titulo}
+                        varianteNombre={variante.nombre}
+                        precio={precioFinal}
+                        moneda={producto.moneda}
+                        imagenUrl={mainImage}
+                      />
+                    </article>
+                  )
+                })
+              ) : (
+                <p className="section-text">
+                  Este producto no tiene variantes.
+                </p>
+              )}
             </div>
           </div>
+
+          {producto.externalMeta?.instrucciones?.length ? (
+            <div className="product-section">
+              <span className="section-badge">Instrucciones</span>
+              <ol className="section-list">
+                {producto.externalMeta.instrucciones.map((paso, index) => (
+                  <li key={`${producto.id}-paso-${index}`}>{paso}</li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+
+          {producto.externalMeta?.almacenamiento ? (
+            <div className="product-section">
+              <span className="section-badge">Almacenamiento</span>
+              <p className="section-text">{producto.externalMeta.almacenamiento}</p>
+            </div>
+          ) : null}
+
+          {producto.externalMeta?.nota ? (
+            <div className="product-section">
+              <span className="section-badge">Nota</span>
+              <p className="section-text">{producto.externalMeta.nota}</p>
+            </div>
+          ) : null}
         </section>
 
         <div className="back-link">

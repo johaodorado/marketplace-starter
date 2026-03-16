@@ -1,0 +1,410 @@
+[
+  {
+    "slug": "artemia-adulta-congelada",
+    "nombre": "Artemia Adulta Congelada",
+    "imagen": "img/productos/artemia-adulta-congelada.png",
+    "descripcion": "Congelando la artemia adulta se conserva de manera intacta sus propiedades enriquecidas y beneficios nutricionales siendo una excelente fuente de proteinas. Nuestra biomasa congelada de artemia adulta esta lista para ser utilizada y a disposicion del mercado acuicultor.",
+    "precios": [
+      {
+        "cantidad": "15 gr",
+        "precio": 3
+      },
+      {
+        "cantidad": "100 gr",
+        "precio": 12
+      }
+    ],
+    "instrucciones": [
+      "Sacar la racion que va darle a los peces.",
+      "Ponerla en agua limpia por unos 2 minutos.",
+      "Alimentar los peces."
+    ],
+    "almacenamiento": "Almacenar en congelacion.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "artemia-alta-eclosion",
+    "nombre": "Artemia de Alta Eclosion",
+    "imagen": "img/productos/artemia-alta-eclosion.png",
+    "descripcion": "Son quistes de artemia de alta calidad y excelente eclosion. De estos huevos incubados adecuadamente eclosionan una alta biomasa de nauplios de artemia. Es un alimento optimo en tamano y valor nutricional para las larvas y alevines de peces. Contienen el 52,79% de proteina cruda.",
+    "precios": [
+      {
+        "cantidad": "10 gr",
+        "precio": 7
+      },
+      {
+        "cantidad": "30 gr",
+        "precio": 7
+      }
+    ],
+    "instrucciones": [
+      "Prepara agua salada con pH de 7,5 a 8,5.",
+      "Mezcla 2 a 2,5 gr de quistes de Artemia por litro de agua.",
+      "Agrega 0,4 gr de activador si no vienen premezclados.",
+      "Usa un recipiente conico y manten la temperatura entre 25-30C.",
+      "Manten la iluminacion a 2000 lux y airea fuertemente; espera 24-48 horas para la eclosion."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y protegido del calor a temperaturas entre 16C a 25C. Por algunos meses almacenar a temperaturas de entre 0C y 4C.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "artemia-descapsulada",
+    "nombre": "Artemia Descapsulada",
+    "imagen": "img/productos/artemia-descapsulada.png",
+    "descripcion": "Son Cystos de Artemia secos descapsulados, empaquetados al vacio, para una alimentacion rapida y segura a los tanques de larvas de camaron o alevines de peces.",
+    "precios": [
+      {
+        "cantidad": "10 gr",
+        "precio": 4
+      },
+      {
+        "cantidad": "30 gr",
+        "precio": 7
+      },
+      {
+        "cantidad": "50 gr",
+        "precio": 10
+      }
+    ],
+    "instrucciones": [
+      "Debe pesar la cantidad a utilizar.",
+      "Debe hidratarse en agua limpia en un recipiente por unos minutos.",
+      "Debe ser distribuido por todo la pecera."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y protegido del calor a temperaturas entre 16C a 25C. Por algunos meses almacenar a temperaturas de entre 0C y 4C.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "artemia-descapsulada-conserva",
+    "nombre": "Artemia Descapsulada en Conserva",
+    "imagen": "img/productos/artemia-descapsulada-conserva.png",
+    "descripcion": "Tiene artemia salina enriquecida de alta calidad, alimento altamente nutritivo para todas las especies de larvas de camaron, camarones y peces.",
+    "precios": [
+      {
+        "cantidad": "30 gr",
+        "precio": 5
+      }
+    ],
+    "instrucciones": [
+      "La aplicacion es facil y directa.",
+      "Basta con abrir el envase y distribuir la cantidad necesaria segun los peces de la pecera.",
+      "Cada gramo de producto tiene aproximadamente 80.000 a 100.000 quistes decapsulados.",
+      "Se administra con una pequena cuchara, ajustando la cantidad para organismos pequenos y peces mas grandes."
+    ],
+    "almacenamiento": "Mantener el producto en un lugar fresco y seco. Una vez abierto en un lugar refrigerado y bien tapado.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "bactericida-plus",
+    "nombre": "Bactericida Plus",
+    "imagen": "img/productos/bactericida-plus.png",
+    "descripcion": "Mantiene un ambiente acuatico equilibrado y elimina bacterias patogenas como Vibrio parahaemolyticus, V. vulnificus, V. harveyi y Pseudomonas en un acuario. Nuestro producto ayudara a mantener un entorno saludable para los peces y otras formas de vida acuatica, equilibrando la flora bacteriana del acuario. Contiene un 10% de acidos grasos y un 63% de acido silicio.",
+    "precios": [
+      {
+        "cantidad": "20 gr",
+        "precio": 3
+      },
+      {
+        "cantidad": "30 gr",
+        "precio": 4
+      }
+    ],
+    "instrucciones": [
+      "5-10 g por cada 100 litros de agua del acuario.",
+      "Mezclar la dosis recomendada con agua del acuario y agitar bien para una dispersion uniforme.",
+      "Aplicar la mezcla directamente en el acuario para asegurar una absorcion adecuada por parte de los organismos acuaticos."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y seco, mantenga el envase cerrado despues de su uso y evite humedad extrema.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "biorremediador",
+    "nombre": "Biorremediador",
+    "imagen": "img/productos/biorremediador.png",
+    "descripcion": "Combinacion de bacillus eficaz para degradar la materia organica, disminuir sulfuros, amonio, nitritos, nitratos. Inhibe vibrios patogenos. Ayuda a mantener excelente calidad de agua y suelos en el cultivo de larvas, camarones y peces.",
+    "precios": [
+      {
+        "cantidad": "30 gr pastillas",
+        "precio": 4
+      },
+      {
+        "cantidad": "30 gr polvo",
+        "precio": 4
+      }
+    ],
+    "instrucciones": [
+      "De aplicacion directa en el medio del cultivo.",
+      "La dosis puede variar desde 1 hasta 2 pastillas o 1 gramo en caso de ser en polvo por aplicacion a la semana dependiendo del tamano de la pecera.",
+      "Esta variacion depende del nivel de materia organica acumulada en la pecera, la densidad o el tamano de la pecera.",
+      "Se recomienda ponerse en contacto con un tecnico para asesoramiento personalizado."
+    ],
+    "almacenamiento": "Almacenar sin refrigeracion, una vez abierto mantengalo bien cerrado y seco, evite lugares con extrema humedad.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "carbon-activado",
+    "nombre": "Carbon Activado",
+    "imagen": "img/productos/carbon-activado.png",
+    "descripcion": "Cuenta con una alta capacidad de absorcion de macro-moleculas organicas disueltas, las cuales son las responsables del tinte amarillo que afecta la apariencia del agua en los acuarios. Su estructura micro-porosa actua como un iman, atrapando y almacenando estas sustancias de manera efectiva, lo que resulta en un agua cristalina que favorece la salud de los peces y mejora el aspecto general del acuario.",
+    "precios": [
+      {
+        "cantidad": "30 gr",
+        "precio": 2
+      }
+    ],
+    "instrucciones": [
+      "Limpia y verifica que el filtro este en buen estado.",
+      "Colocala el carbon activado en el filtro.",
+      "Se utiliza 0,5gr/L en caso de agua marina y 1gr/L si es agua dulce.",
+      "Cambiar el carbon cada 6 semanas en agua marina y cada 4 semanas en agua dulce."
+    ],
+    "almacenamiento": "Mantener en un lugar fresco, seco y fuera del alcance de la luz solar directa. Cierra bien la bolsa despues de cada uso para evitar la contaminacion.",
+    "nota": "Mantener el producto en un lugar fresco y seco. Una vez abierto en un lugar refrigerado y bien tapado."
+  },
+  {
+    "slug": "conchas-mar-trituradas",
+    "nombre": "Conchas de Mar Trituradas Decorativas",
+    "imagen": "img/productos/conchas-mar-trituradas.png",
+    "descripcion": "El toque perfecto para embellecer tu acuario. Cuidadosamente seleccionadas y trituradas, anaden un aspecto natural y vibrante al entorno acuatico. Disponibles en varios tamanos y colores, promueven un ambiente equilibrado y saludable para tus peces. Dale vida a tu acuario con nuestra seleccion de conchas trituradas.",
+    "precios": [
+      {
+        "cantidad": "300 gr",
+        "precio": 0.9
+      },
+      {
+        "cantidad": "1 kg",
+        "precio": 3
+      }
+    ],
+    "instrucciones": [
+      "Enjuagar las conchas con agua limpia antes de colocarlas.",
+      "Distribuir uniformemente en el fondo del acuario.",
+      "Pueden usarse como decoracion o sustrato."
+    ],
+    "almacenamiento": "Almacenar en un lugar seco.",
+    "nota": "Producto decorativo natural."
+  },
+  {
+    "slug": "espirulina-microfina",
+    "nombre": "Espirulina Microfina",
+    "imagen": "img/productos/espirulina-microfina.png",
+    "descripcion": "Es un tipo de alga microscopica seca que se caracteriza por su color verde y su alto contenido de proteinas, beta-caroteno y vitamina B-12. Es un alimento muy beneficioso para diversas especies acuaticas, como los peneidos, camarones de agua dulce, larvas de peces y Artemia, siendo una opcion ideal para su cultivo.",
+    "precios": [
+      {
+        "cantidad": "30 gr",
+        "precio": 4
+      }
+    ],
+    "instrucciones": [
+      "Dependiendo de la especie, la cantidad variara segun la especie.",
+      "Por lo general, oscila entre el 1% y el 100% de la alimentacion diaria.",
+      "Tiene una validez de 36 meses a partir de la fecha de fabricacion."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y seco, a una temperatura maxima de 21C / 70F. Utilizar la totalidad de la alimentacion diaria.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "fitobiotico-microbicida",
+    "nombre": "Fitobiotico, Microbicida Y Antiparasitario",
+    "imagen": "img/productos/fitobiotico-microbicida.png",
+    "descripcion": "Nuestro producto contiene extractos de hierbas, levaduras y acidos grasos con propiedades antimicrobianas y antiparasitarias. Su funcion principal es inhibir el crecimiento de bacterias patogenas al bloquear el Quorum sensing, promoviendo asi un entorno acuatico mas saludable para el bienestar general de los peces.",
+    "precios": [
+      {
+        "cantidad": "30 gr",
+        "precio": 4
+      }
+    ],
+    "instrucciones": [
+      "Utilizar de 3 a 6 gramos por kilogramo de alimento balanceado para peces.",
+      "Mezclar esta cantidad con 2 o 3 litros de agua por saco de alimento y asegurar una aplicacion uniforme para facilitar su absorcion.",
+      "Luego, sellar el alimento con un aglutinante adecuado.",
+      "Para obtener informacion mas detallada, consultar con un tecnico especializado en acuarismo."
+    ],
+    "almacenamiento": "Mantenga el envase cerrado despues de su uso y evite humedad extrema.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "flake-negro-artemia",
+    "nombre": "Flake Negro de Artemia",
+    "imagen": "img/productos/flake-negro-artemia.png",
+    "descripcion": "Es un suplemento alimenticio de alta calidad disenado para larvas de camaron y alevines de peces. Su formula nutricionalmente balanceada y su estabilidad en el agua garantizan una adecuada nutricion en los estadios iniciales de desarrollo. Con un contenido minimo de proteina del 46%, este alimento ofrece una facil aplicacion y contribuye a mantener una buena calidad del medio de cultivo.",
+    "precios": [
+      {
+        "cantidad": "15 gr",
+        "precio": 2.5
+      }
+    ],
+    "instrucciones": [
+      "Triturar o tamizar el producto de ser necesario.",
+      "Incluir un 20-25% de flake negro dentro de la dieta normal.",
+      "Puede mezclarse con la dieta alimenticia usada normalmente.",
+      "Hidratar el flake de ser necesario en agua dulce o salada.",
+      "Esparcir por el tanque uniformemente."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y seco, protegido de la luz directa y alejado de fuentes de calor.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "flake-rojo-artemia",
+    "nombre": "Flake Rojo de Artemia",
+    "imagen": "img/productos/flake-rojo-artemia.png",
+    "descripcion": "Hojuelas de Artemia es una dieta nutricional balanceada y completa para larvas de camaron y peces, formulada con ingredientes naturales de alta calidad. Con un contenido minimo de proteina del 46%, ofrece una excelente fuente de nutrientes para el optimo desarrollo y vitalidad de los animales acuaticos.",
+    "precios": [
+      {
+        "cantidad": "15 gr",
+        "precio": 2.5
+      }
+    ],
+    "instrucciones": [
+      "Triturar o tamizar el producto de ser necesario.",
+      "Alimentar de 4 a 5 veces al dia.",
+      "Las hojuelas flotaran inicialmente y luego se mantendran suspendidas en la mitad de la columna de agua.",
+      "Alimentar solo la cantidad que los animales puedan consumir en 5 minutos.",
+      "Dependiendo del tamano y cantidad de animales, utiliza aproximadamente una pizca por alimentacion."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y seco, protegido de la luz directa y alejado de fuentes de calor.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "larvas-deshidratadas",
+    "nombre": "Larvas Deshidratadas",
+    "imagen": "img/productos/larvas-deshidratadas.png",
+    "descripcion": "El complemento perfecto para tus peces de acuario, son un alimento de alto valor nutritivo recomendado por especialistas por sus multiples beneficios y delicioso sabor. Cada larva de camaron mide entre 3 y 4 mm, ofreciendo una potente combinacion de fibra y proteinas. Este alimento es ideal para todo tipo de peces de acuario, proporcionando la energia y los nutrientes que necesitan para vivir con salud.",
+    "precios": [
+      {
+        "cantidad": "20 gr",
+        "precio": 5
+      },
+      {
+        "cantidad": "50 gr",
+        "precio": 12
+      },
+      {
+        "cantidad": "500 gr",
+        "precio": 50
+      }
+    ],
+    "instrucciones": [
+      "Debe pesar la cantidad a utilizar.",
+      "Debe hidratarse en agua limpia en un recipiente por unos minutos.",
+      "Debe ser distribuido por toda la pecera."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y seco, mantenga el envase cerrado despues de su uso y evite humedad extrema.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "neutralizador-cloro",
+    "nombre": "Neutralizador de Cloro en Cristales",
+    "imagen": "img/productos/neutralizador-cloro.png",
+    "descripcion": "Enriquecido con vitaminas y minerales ideal para mantener la calidad de agua de su pecera, y puede ser utilizada al hacer recambios pequenos de agua que tambien ayudaran a mantener la calidad del medio y de sus peces y de toda la biota presente en el estanque.",
+    "precios": [
+      {
+        "cantidad": "50 gr",
+        "precio": 2
+      }
+    ],
+    "instrucciones": [
+      "La forma de uso es simple y sencilla.",
+      "Solamente abrir el envase y colocar una media cucharadita para una pecera de 15 a 20 litros y distribuirlo.",
+      "Para peceras de mayor volumen aumentar proporcionalmente de acuerdo con los litros de agua."
+    ],
+    "almacenamiento": "Mantenga el envase cerrado despues de su uso y evite humedad extrema.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "pasta-artemia-eclosionada",
+    "nombre": "Pasta de Artemia Eclosionada",
+    "imagen": "img/productos/pasta-artemia-eclosionada.png",
+    "descripcion": "El alimento congelado para acuarios es una opcion nutritiva e insustituible que mejora la salud, vitalidad y belleza de peces e invertebrados. Favorece comportamientos naturales, como la reproduccion y el instinto cazador, y ayuda a mantener un ecosistema limpio y equilibrado. Esta enriquecido con emulsiones de alta calidad, ideales para el desarrollo de alevines, promoviendo su crecimiento y supervivencia.",
+    "precios": [
+      {
+        "cantidad": "100 gr",
+        "precio": 25
+      }
+    ],
+    "instrucciones": [
+      "Sacar la racion que va darle a los peces.",
+      "Ponerla en agua limpia por unos 2 minutos.",
+      "Alimentar los peces."
+    ],
+    "almacenamiento": "Almacenar en congelacion.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "piedras-mar-decorativas",
+    "nombre": "Piedras de Mar Decorativas",
+    "imagen": "img/productos/piedras-mar-decorativas.png",
+    "descripcion": "La base perfecta para crear paisajes submarinos fascinantes. Nuestras piedras, seleccionadas por su calidad y estetica, agregan textura y profundidad al entorno acuatico. Disponibles en una variedad de formas y colores, permiten la creacion de disenos unicos y personalizados. Eleva la belleza de tu acuario con nuestras piedras decorativas de alta calidad.",
+    "precios": [
+      {
+        "cantidad": "Medianas y Grandes 1 kg",
+        "precio": 2
+      }
+    ],
+    "instrucciones": [
+      "Enjuagar las piedras con agua limpia antes de colocarlas.",
+      "Distribuir segun el diseno deseado en el acuario."
+    ],
+    "almacenamiento": "Almacenar en un lugar seco.",
+    "nota": "Producto decorativo natural."
+  },
+  {
+    "slug": "pre-mezcla-alimenticia",
+    "nombre": "Pre Mezcla Alimenticia",
+    "imagen": "img/productos/pre-mezcla-alimenticia.png",
+    "descripcion": "El producto incluye altos niveles de acidos grasos (HUFAS) de origen marino premium, es una pre-mezcla que contiene una increible cantidad de proteina cruda minima de 40% y el tamano de sus particulas es de 0.4 a 0.6 mm. Es un alimento ideal para crias y peces.",
+    "precios": [
+      {
+        "cantidad": "30 gr",
+        "precio": 2
+      }
+    ],
+    "instrucciones": [
+      "Alimenta a los peces durante un periodo de cinco a siete dias en la fase inicial antes de introducirlos en la pecera principal.",
+      "No es necesario refrigerar el alimento si se mantiene en su envase original sellado.",
+      "Es crucial administrar el inventario de manera que se utilice primero el alimento mas antiguo para garantizar su frescura y calidad."
+    ],
+    "almacenamiento": "Almacenar el producto en un lugar fresco, seco y bien ventilado, protegiendolo de la luz solar y manteniendolo alejado de las paredes.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "promotor-crecimiento",
+    "nombre": "Promotor de Crecimiento",
+    "imagen": "img/productos/promotor-crecimiento.png",
+    "descripcion": "Potencia el crecimiento natural mediante la combinacion sinergica de acidos organicos fitobioticos, extraidos del ajo, que generan una acidificacion optima en el sistema digestivo. Esto conlleva a mejorar el desarrollo, la absorcion de nutrientes, la respuesta inmunologica y la capacidad de resistencia frente a enfermedades.",
+    "precios": [
+      {
+        "cantidad": "30 gr",
+        "precio": 3
+      }
+    ],
+    "instrucciones": [
+      "En condiciones de invierno, cuando la temperatura del agua es superior a 28C, aplicar una dosis de 1 gr de producto por 100 gr de alimento.",
+      "En verano, cuando la temperatura es inferior a 28C, aplicar una dosis de 1.5 gr de producto por 100gr de alimento.",
+      "Para aplicacion en peceras, aplica de 3 a 6 gramos por cada 100 litros de agua directamente en la pecera."
+    ],
+    "almacenamiento": "Almacenar en un lugar fresco y seco, no mezclar con aditivos de naturaleza alcalina debido a que el rango del pH del producto es de 1 a 2,3. No exponer directamente al sol.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  },
+  {
+    "slug": "sal-grano-eclosion",
+    "nombre": "Sal en Grano Tipo E, Para Eclosion",
+    "imagen": "img/productos/sal-grano-eclosion.png",
+    "descripcion": "Es ideal para preparar el agua que se utiliza para la eclosion de los cistos de artemia para alimentar a los alevines con los nauplios de artemia que eclosionen. Esta sal esta libre de impurezas que puede traer la sal en grano comun. Tambien sirve para dar tratamiento a los peces en caso de parasitos externos que se tengan por falta de limpieza en la pecera, peces con aletas rotas o heridas.",
+    "precios": [
+      {
+        "cantidad": "2 kg",
+        "precio": 2
+      }
+    ],
+    "instrucciones": [
+      "Prepara una solucion con media cucharada de sal por litro de agua para la eclosion de Artemia.",
+      "Airea fuertemente y proporciona buena iluminacion.",
+      "Para tratar peceras, usa una cucharada por cada 6 galones de agua.",
+      "Disuelve en el estanque y elimina la sal con cambios de agua despues del tratamiento.",
+      "Para tratamientos individuales, usa 1 1/2 cucharada por galon de agua por unos 2 minutos, segun la condicion de los peces."
+    ],
+    "almacenamiento": "Mantener el envase cerrado y evita la humedad extrema.",
+    "nota": "Todos estos requisitos deben ser realizados estrictamente, de otra manera no se puede garantizar la calidad del producto."
+  }
+]

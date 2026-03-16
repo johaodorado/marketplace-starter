@@ -8,43 +8,66 @@ export default function AuthNav() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [role, setRole] = useState<string | null>(null)
 
   useEffect(() => {
-    setMounted(true)
-    const token = localStorage.getItem('accessToken')
-    setIsLoggedIn(Boolean(token))
+    async function loadSession() {
+      setMounted(true)
+      const token = localStorage.getItem('accessToken')
+      setIsLoggedIn(Boolean(token))
+
+      if (!token) {
+        setRole(null)
+        return
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/api/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          setRole(null)
+          return
+        }
+
+        const data = await response.json()
+        setRole(typeof data?.rol === 'string' ? data.rol : null)
+      } catch {
+        setRole(null)
+      }
+    }
+
+    loadSession()
   }, [])
 
   function handleLogout() {
     localStorage.removeItem('accessToken')
     setIsLoggedIn(false)
+    setRole(null)
     router.push('/')
     router.refresh()
   }
 
   if (!mounted) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-24 rounded-xl border border-slate-200" />
-        <div className="h-10 w-24 rounded-xl bg-slate-200" />
+      <div className="auth-nav">
+        <div className="auth-skeleton" />
+        <div className="auth-skeleton auth-skeleton-solid" />
       </div>
     )
   }
 
   if (!isLoggedIn) {
     return (
-      <div className="flex items-center gap-3">
-        <Link
-          href="/login"
-          className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
-        >
+      <div className="auth-nav">
+        <Link href="/login" className="auth-link auth-link-ghost">
           Iniciar sesión
         </Link>
 
-        <Link
-          href="/registro"
-          className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
-        >
+        <Link href="/registro" className="auth-link auth-link-solid">
           Registrarse
         </Link>
       </div>
@@ -52,18 +75,25 @@ export default function AuthNav() {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Link
-        href="/cuenta"
-        className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
-      >
+    <div className="auth-nav">
+      <Link href="/cuenta" className="auth-link auth-link-ghost">
         Mi cuenta
       </Link>
+
+      <Link href="/cuenta/ordenes" className="auth-link auth-link-ghost">
+        Mis ordenes
+      </Link>
+
+      {role === 'ADMIN' ? (
+        <Link href="/admin/pagos" className="auth-link auth-link-ghost">
+          Admin
+        </Link>
+      ) : null}
 
       <button
         type="button"
         onClick={handleLogout}
-        className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
+        className="auth-link auth-link-solid"
       >
         Cerrar sesión
       </button>
