@@ -219,4 +219,38 @@ export class OrdersService {
 
     return order
   }
+
+async listAllForAdmin() {
+  return this.prisma.orden.findMany({
+    orderBy: {
+      creadoEn: 'desc',
+    },
+    include: {
+      comprador: true,
+      items: true,
+      pago: true,
+    },
+  })
+}
+
+async getByIdForAdmin(orderId: string) {
+  const order = await this.prisma.orden.findUnique({
+    where: {
+      id: orderId,
+    },
+    include: {
+      comprador: true,
+      items: true,
+      pago: true,
+      reservas: true,
+    },
+  })
+
+  if (!order) {
+    throw new NotFoundException('Orden no encontrada')
+  }
+
+  return order
+}
+
 }

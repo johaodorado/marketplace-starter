@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 type Usuario = {
@@ -62,33 +63,76 @@ export default function CuentaPage() {
           <p className="text-red-600">{error}</p>
         </div>
       ) : user ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-sm text-slate-500">Nombre</p>
-              <p className="font-medium">{user.nombre ?? 'No registrado'}</p>
-            </div>
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-sm text-slate-500">Nombre</p>
+                <p className="font-medium">{user.nombre ?? 'No registrado'}</p>
+              </div>
 
-            <div>
-              <p className="text-sm text-slate-500">Apellido</p>
-              <p className="font-medium">{user.apellido ?? 'No registrado'}</p>
-            </div>
+              <div>
+                <p className="text-sm text-slate-500">Apellido</p>
+                <p className="font-medium">{user.apellido ?? 'No registrado'}</p>
+              </div>
 
-            <div>
-              <p className="text-sm text-slate-500">Correo</p>
-              <p className="font-medium">{user.email}</p>
-            </div>
+              <div>
+                <p className="text-sm text-slate-500">Correo</p>
+                <p className="font-medium">{user.email}</p>
+              </div>
 
-            <div>
-              <p className="text-sm text-slate-500">Teléfono</p>
-              <p className="font-medium">{user.telefono ?? 'No registrado'}</p>
-            </div>
+              <div>
+                <p className="text-sm text-slate-500">Teléfono</p>
+                <p className="font-medium">{user.telefono ?? 'No registrado'}</p>
+              </div>
 
-            <div>
-              <p className="text-sm text-slate-500">Rol</p>
-              <p className="font-medium">{user.rol}</p>
+              <div>
+                <p className="text-sm text-slate-500">Rol</p>
+                <p className="font-medium">{user.rol}</p>
+              </div>
             </div>
           </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold">Órdenes</h2>
+            <p className="mt-2 text-slate-600">
+              Revisa el estado de tus compras y continúa con el pago cuando haga falta.
+            </p>
+
+            <Link
+              href="/cuenta/ordenes"
+              className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-2 text-white"
+            >
+              Ver mis órdenes
+            </Link>
+          </div>
+
+          {user?.rol === 'ADMIN' ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold">Administración</h2>
+              <p className="mt-2 text-slate-600">
+                Revisa pagos reportados y valida transferencias.
+              </p>
+
+              <Link
+                href="/admin/pagos"
+                className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-2 text-white"
+              >
+                Ir a pagos admin
+              </Link>
+
+
+              <Link
+  href="/admin/ordenes"
+  className="mt-4 ml-3 inline-block rounded-xl border border-slate-300 px-4 py-2"
+>
+  Ver órdenes admin
+</Link>
+
+
+
+            </div>
+          ) : null}
         </div>
       ) : null}
     </main>
