@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
-
+import Link from 'next/link'
 type Categoria = {
   id: string
   nombre: string
@@ -45,7 +45,8 @@ export default function AdminProductosPage() {
   const [categoriaId, setCategoriaId] = useState('')
   const [precioBase, setPrecioBase] = useState('')
   const [moneda, setMoneda] = useState('USD')
-  const [imageUrl, setImageUrl] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState('')
   const [variantName, setVariantName] = useState('')
   const [sku, setSku] = useState('')
   const [variantPrice, setVariantPrice] = useState('')
@@ -95,6 +96,14 @@ export default function AdminProductosPage() {
     loadData()
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview)
+      }
+    }
+  }, [imagePreview])
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
@@ -130,18 +139,25 @@ export default function AdminProductosPage() {
 
       const producto = await createResponse.json()
 
-      if (imageUrl.trim()) {
-        await fetch(`http://localhost:3000/api/admin/products/${producto.id}/images`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+      if (imageFile) {
+        const formData = new FormData()
+        formData.append('file', imageFile)
+
+        const imageResponse = await fetch(
+          `http://localhost:3000/api/admin/products/${producto.id}/images`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
           },
-          body: JSON.stringify({
-            url: imageUrl.trim(),
-            orden: 0,
-          }),
-        })
+        )
+
+        if (!imageResponse.ok) {
+          const data = await imageResponse.json().catch(() => null)
+          throw new Error(data?.error?.message || data?.message || 'No se pudo subir la imagen')
+        }
       }
 
       let variantId: string | null = null
@@ -220,7 +236,8 @@ export default function AdminProductosPage() {
       setCategoriaId('')
       setPrecioBase('')
       setMoneda('USD')
-      setImageUrl('')
+      setImageFile(null)
+      setImagePreview('')
       setVariantName('')
       setSku('')
       setVariantPrice('')
@@ -304,13 +321,37 @@ export default function AdminProductosPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">URL de imagen</label>
+              <label className="mb-2 block text-sm font-medium">Imagen del producto</label>
               <input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  setImageFile(file)
+
+                  if (imagePreview) {
+                    URL.revokeObjectURL(imagePreview)
+                  }
+
+                  if (file) {
+                    const previewUrl = URL.createObjectURL(file)
+                    setImagePreview(previewUrl)
+                  } else {
+                    setImagePreview('')
+                  }
+                }}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3"
-                placeholder="https://..."
               />
+
+              {imagePreview ? (
+                <div className="mt-3">
+                  <img
+                    src={imagePreview}
+                    alt="Vista previa"
+                    className="h-32 w-32 rounded-xl border border-slate-200 object-cover"
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-xl border border-slate-200 p-4">
@@ -398,25 +439,56 @@ export default function AdminProductosPage() {
                   key={producto.id}
                   className="rounded-xl border border-slate-200 p-4"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold">{producto.titulo}</h3>
-                      <p className="text-sm text-slate-500">
-                        {producto.categoria?.nombre ?? 'Sin categoría'}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Estado: {producto.estado}
-                      </p>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex gap-4">
+                      <div className="h-24 w-24 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        {producto.imagenes?.[0]?.url ? (
+                          <img
+                            src={producto.imagenes[0].url}
+                            alt={producto.titulo}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                            Sin imagen
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold">{producto.titulo}</h3>
+                        <p className="text-sm text-slate-500">
+                          {producto.categoria?.nombre ?? 'Sin categoría'}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Estado: {producto.estado}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Imágenes: {producto.imagenes.length}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="font-bold">
-                        {producto.moneda} {Number(producto.precioBase).toFixed(2)}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Variantes: {producto.variantes.length}
-                      </p>
-                    </div>
+              <div className="text-left sm:text-right">
+  <p className="font-bold">
+    {producto.moneda} {Number(producto.precioBase).toFixed(2)}
+  </p>
+  <p className="text-sm text-slate-500">
+    Variantes: {producto.variantes.length}
+  </p>
+
+  <div className="mt-3">
+    <a
+      href={`/admin/productos/${producto.id}`}
+      className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
+    >
+      Editar
+    </a>
+  </div>
+</div>
+
+
+
                   </div>
                 </article>
               ))}

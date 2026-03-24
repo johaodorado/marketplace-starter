@@ -15,9 +15,16 @@ import { CreateProductVariantDto } from './dto/create-product-variant.dto'
 import { UpdateProductVariantDto } from './dto/update-product-variant.dto'
 import { TipoMovimientoInventario } from '@prisma/client'
 import { AdjustStockDto } from './dto/adjust-stock.dto'
+import { CloudinaryService } from '../../common/storage/cloudinary.service'
+
+
+
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+  private readonly prisma: PrismaService,
+  private readonly cloudinaryService: CloudinaryService,
+) {}
 
   async listPublic() {
     return this.prisma.producto.findMany({
@@ -41,6 +48,8 @@ export class ProductsService {
     })
   }
 
+
+  
   async getPublicById(id: string) {
     const product = await this.prisma.producto.findFirst({
       where: {
@@ -696,6 +705,195 @@ async updateStatusAdmin(id: string, dto: UpdateProductStatusDto) {
 }
 
 
+async uploadImage(productId: string, file: Express.Multer.File) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  const uploaded = await this.cloudinaryService.uploadProductImage(file, productId)
+
+  const lastImage = await this.prisma.imagenProducto.findFirst({
+    where: { productoId: productId },
+    orderBy: { orden: 'desc' },
+  })
+
+  const nextOrder = lastImage ? lastImage.orden + 1 : 0
+
+  return this.prisma.imagenProducto.create({
+    data: {
+      productoId: productId,
+      url: uploaded.secure_url,
+      orden: nextOrder,
+    },
+  })
+}
+
+
+
+async updateAdmin(id: string, dto: UpdateProductDto) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  if (dto.categoriaId) {
+    const category = await this.prisma.categoria.findUnique({
+      where: { id: dto.categoriaId },
+    })
+
+    if (!category) {
+      throw new NotFoundException('Categoría no encontrada')
+    }
+  }
+
+  return this.prisma.producto.update({
+    where: { id },
+    data: {
+      titulo: dto.titulo ?? product.titulo,
+      descripcion: dto.descripcion ?? product.descripcion,
+      categoriaId: dto.categoriaId ?? product.categoriaId,
+      precioBase: dto.precioBase ?? product.precioBase,
+      moneda: dto.moneda ?? product.moneda,
+    },
+    include: {
+      categoria: true,
+      imagenes: true,
+      variantes: true,
+    },
+  })
+}
+
+async getAdminById(id: string) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id },
+    include: {
+      categoria: true,
+      imagenes: true,
+      variantes: true,
+    },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  return product
+}
+
+
+async deleteImageAdmin(productId: string, imageId: string) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  const image = await this.prisma.imagenProducto.findFirst({
+    where: {
+      id: imageId,
+      productoId: productId,
+    },
+  })
+
+  if (!image) {
+    throw new NotFoundException('Imagen no encontrada')
+  }
+
+  await this.prisma.imagenProducto.delete({
+    where: { id: imageId },
+  })
+
+  return { ok: true }
+}
+
+async moveImageAdmin(productId: string, imageId: string, direction: 'up' | 'down') {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  const images = await this.prisma.imagenProducto.findMany({
+    where: { productoId: productId },
+    orderBy: { orden: 'asc' },
+  })
+
+  const currentIndex = images.findIndex((img) => img.id === imageId)
+
+  if (currentIndex === -1) {
+    throw new NotFoundException('Imagen no encontrada')
+  }
+
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+  if (targetIndex < 0 || targetIndex >= images.length) {
+    return { ok: true }
+  }
+
+  const currentImage = images[currentIndex]
+  const targetImage = images[targetIndex]
+
+  await this.prisma.$transaction([
+    this.prisma.imagenProducto.update({
+      where: { id: currentImage.id },
+      data: { orden: targetImage.orden },
+    }),
+    this.prisma.imagenProducto.update({
+      where: { id: targetImage.id },
+      data: { orden: currentImage.orden },
+    }),
+  ])
+
+  return { ok: true }
+}
+
+async setPrimaryImageAdmin(productId: string, imageId: string) {
+  const product = await this.prisma.producto.findUnique({
+    where: { id: productId },
+  })
+
+  if (!product) {
+    throw new NotFoundException('Producto no encontrado')
+  }
+
+  const images = await this.prisma.imagenProducto.findMany({
+    where: { productoId: productId },
+    orderBy: { orden: 'asc' },
+  })
+
+  const selected = images.find((img) => img.id === imageId)
+
+  if (!selected) {
+    throw new NotFoundException('Imagen no encontrada')
+  }
+
+  const reordered = [
+    selected,
+    ...images.filter((img) => img.id !== imageId),
+  ]
+
+  await this.prisma.$transaction(
+    reordered.map((img, index) =>
+      this.prisma.imagenProducto.update({
+        where: { id: img.id },
+        data: { orden: index },
+      }),
+    ),
+  )
+
+  return { ok: true }
+}
 
 
 }
