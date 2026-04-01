@@ -1,8 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import { FormEvent, useEffect, useState } from 'react'
-
+import Link from 'next/link'
 type Categoria = {
   id: string
   nombre: string
@@ -38,7 +37,6 @@ export default function AdminProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [changingStatusId, setChangingStatusId] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -254,44 +252,6 @@ export default function AdminProductosPage() {
       setSaving(false)
     }
   }
-
- async function handleToggleStatus(producto: Producto) {
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
-    }
-
-    setChangingStatusId(producto.id)
-    setError('')
-    setSuccess('')
-
-    const nuevoEstado = producto.estado === 'ACTIVO' ? 'PAUSADO' : 'ACTIVO'
-
-    const res = await fetch(`http://localhost:3000/api/admin/products/${producto.id}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        estado: nuevoEstado,
-      }),
-    })
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo actualizar el estado')
-    }
-
-    setSuccess(`Producto ${nuevoEstado === 'ACTIVO' ? 'activado' : 'pausado'} correctamente`)
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error actualizando estado')
-  } finally {
-    setChangingStatusId('')
-  }
-}
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
@@ -509,36 +469,26 @@ export default function AdminProductosPage() {
                       </div>
                     </div>
 
-                    <div className="text-left sm:text-right">
-                      <p className="font-bold">
-                        {producto.moneda} {Number(producto.precioBase).toFixed(2)}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Variantes: {producto.variantes.length}
-                      </p>
+              <div className="text-left sm:text-right">
+  <p className="font-bold">
+    {producto.moneda} {Number(producto.precioBase).toFixed(2)}
+  </p>
+  <p className="text-sm text-slate-500">
+    Variantes: {producto.variantes.length}
+  </p>
 
-                      <div className="mt-3 flex flex-wrap gap-2 sm:justify-end">
-                        <Link
-                          href={`/admin/productos/${producto.id}`}
-                          className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
-                        >
-                          Editar
-                        </Link>
+  <div className="mt-3">
+    <a
+      href={`/admin/productos/${producto.id}`}
+      className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
+    >
+      Editar
+    </a>
+  </div>
+</div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(producto)}
-                          disabled={changingStatusId === producto.id}
-                          className="inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm disabled:opacity-60"
-                        >
-                          {changingStatusId === producto.id
-  ? 'Cambiando...'
-  : producto.estado === 'ACTIVO'
-    ? 'Pausar'
-    : 'Activar'}
-                        </button>
-                      </div>
-                    </div>
+
+
                   </div>
                 </article>
               ))}

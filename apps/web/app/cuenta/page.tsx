@@ -93,31 +93,48 @@ export default function CuentaPage() {
             </div>
           </div>
 
-          <section className="account-shortcut-card">
-            <h2>Órdenes</h2>
-            <p>Revisa el estado de tus compras y completa pagos pendientes.</p>
-            <div className="account-shortcut-actions">
-              <Link href="/cuenta/ordenes" className="account-link-btn">
-                Ver mis órdenes
-              </Link>
-            </div>
-          </section>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold">Órdenes</h2>
+            <p className="mt-2 text-slate-600">
+              Revisa el estado de tus compras y continúa con el pago cuando haga falta.
+            </p>
 
-          {user.rol === 'ADMIN' ? (
-            <section className="account-shortcut-card">
-              <h2>Administración</h2>
-              <p>Gestiona pagos y monitorea las órdenes del marketplace.</p>
-              <div className="account-shortcut-actions">
-                <Link href="/admin/pagos" className="account-link-btn">
-                  Pagos admin
-                </Link>
-                <Link href="/admin/ordenes" className="account-link-btn account-link-btn-soft">
-                  Ordenes admin
-                </Link>
-              </div>
-            </section>
-          ) : null}
+            <Link
+              href="/cuenta/ordenes"
+              className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-2 text-white"
+            >
+              Ver mis órdenes
+            </Link>
           </div>
+
+          {user?.rol === 'ADMIN' ? (
+            
+<div className="mt-4 flex flex-wrap gap-3">
+  <Link
+    href="/admin/pagos"
+    className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+  >
+    Ir a pagos admin
+  </Link>
+
+  <Link
+    href="/admin/ordenes"
+    className="rounded-xl border border-slate-300 px-4 py-2"
+  >
+    Ver órdenes admin
+  </Link>
+
+  <Link
+    href="/admin/productos"
+    className="rounded-xl border border-slate-300 px-4 py-2"
+  >
+    Ver productos admin
+  </Link>
+</div>
+
+
+          ) : null}
+        </div>
       ) : null}
     </main>
   )
