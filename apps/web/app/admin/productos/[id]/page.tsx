@@ -62,6 +62,8 @@ const [variantSku, setVariantSku] = useState('')
 const [variantPrice, setVariantPrice] = useState('')
 const [variantStock, setVariantStock] = useState('')
 const [savingVariant, setSavingVariant] = useState(false)
+  const [adjustingStockVariantId, setAdjustingStockVariantId] = useState('')
+  const [stockAdjustByVariant, setStockAdjustByVariant] = useState<Record<string, string>>({})
 
 
   useEffect(() => {
@@ -82,8 +84,8 @@ const [savingVariant, setSavingVariant] = useState(false)
       }
 
       const [categoriesRes, productRes] = await Promise.all([
-        fetch('http://localhost:3000/api/categories'),
-        fetch(`http://localhost:3000/api/admin/products/${productId}`, {
+        fetch('/api/categories'),
+        fetch(`/api/admin/products/${productId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -136,7 +138,7 @@ const [savingVariant, setSavingVariant] = useState(false)
         throw new Error('Debes iniciar sesión como admin')
       }
 
-      const updateResponse = await fetch(`http://localhost:3000/api/admin/products/${productId}`, {
+      const updateResponse = await fetch(`/api/admin/products/${productId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +159,7 @@ const [savingVariant, setSavingVariant] = useState(false)
       }
 
       const statusResponse = await fetch(
-        `http://localhost:3000/api/admin/products/${productId}/status`,
+        `/api/admin/products/${productId}/status`,
         {
           method: 'PATCH',
           headers: {
@@ -203,7 +205,7 @@ const [savingVariant, setSavingVariant] = useState(false)
         const formData = new FormData()
         formData.append('file', file)
 
-        const res = await fetch(`http://localhost:3000/api/admin/products/${productId}/images`, {
+        const res = await fetch(`/api/admin/products/${productId}/images`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -541,6 +543,7 @@ const [savingVariant, setSavingVariant] = useState(false)
             <th className="py-3 pr-4">SKU</th>
             <th className="py-3 pr-4">Precio</th>
             <th className="py-3 pr-4">Stock</th>
+            <th className="py-3 pr-4">Ajustar</th>
           </tr>
         </thead>
         <tbody>
@@ -552,6 +555,30 @@ const [savingVariant, setSavingVariant] = useState(false)
                 {variante.precio != null ? Number(variante.precio).toFixed(2) : 'Sin precio'}
               </td>
               <td className="py-3 pr-4">{variante.stock}</td>
+              <td className="py-3 pr-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={stockAdjustByVariant[variante.id] ?? ''}
+                    onChange={(e) =>
+                      setStockAdjustByVariant((prev) => ({
+                        ...prev,
+                        [variante.id]: e.target.value,
+                      }))
+                    }
+                    className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+                    placeholder="+/-"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAdjustExistingStock(variante.id)}
+                    disabled={adjustingStockVariantId === variante.id}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-60"
+                  >
+                    {adjustingStockVariantId === variante.id ? 'Aplicando...' : 'Aplicar'}
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -576,7 +603,7 @@ async function handleCreateVariant(e: FormEvent<HTMLFormElement>) {
     setSuccess('')
 
     const variantRes = await fetch(
-      `http://localhost:3000/api/admin/products/${productId}/variants`,
+      `/api/admin/products/${productId}/variants`,
       {
         method: 'POST',
         headers: {
@@ -600,7 +627,7 @@ async function handleCreateVariant(e: FormEvent<HTMLFormElement>) {
 
     if (Number(variantStock || 0) > 0) {
       const stockRes = await fetch(
-        `http://localhost:3000/api/admin/products/${productId}/variants/${variant.id}/stock`,
+        `/api/admin/products/${productId}/variants/${variant.id}/stock`,
         {
           method: 'POST',
           headers: {
@@ -645,7 +672,7 @@ async function handleDeleteImage(imageId: string) {
     setSuccess('')
 
     const res = await fetch(
-      `http://localhost:3000/api/admin/products/${productId}/images/${imageId}`,
+      `/api/admin/products/${productId}/images/${imageId}`,
       {
         method: 'DELETE',
         headers: {
@@ -680,7 +707,7 @@ async function handleMoveImage(imageId: string, direction: 'up' | 'down') {
     setSuccess('')
 
     const res = await fetch(
-      `http://localhost:3000/api/admin/products/${productId}/images/${imageId}/${direction === 'up' ? 'move-up' : 'move-down'}`,
+      `/api/admin/products/${productId}/images/${imageId}/${direction === 'up' ? 'move-up' : 'move-down'}`,
       {
         method: 'PATCH',
         headers: {
@@ -711,7 +738,7 @@ async function handleSetPrimaryImage(imageId: string) {
     setSuccess('')
 
     const res = await fetch(
-      `http://localhost:3000/api/admin/products/${productId}/images/${imageId}/primary`,
+      `/api/admin/products/${productId}/images/${imageId}/primary`,
       {
         method: 'PATCH',
         headers: {
@@ -729,6 +756,52 @@ async function handleSetPrimaryImage(imageId: string) {
     await loadData()
   } catch (err) {
     setError(err instanceof Error ? err.message : 'Error actualizando imagen principal')
+  }
+}
+
+async function handleAdjustExistingStock(variantId: string) {
+  try {
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      throw new Error('Debes iniciar sesión como admin')
+    }
+
+    const cantidad = Number(stockAdjustByVariant[variantId] || 0)
+    if (!Number.isFinite(cantidad) || cantidad === 0) {
+      throw new Error('Ingresa una cantidad distinta de 0')
+    }
+
+    setAdjustingStockVariantId(variantId)
+    setError('')
+    setSuccess('')
+
+    const res = await fetch(
+      `/api/admin/products/${productId}/variants/${variantId}/stock`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          cantidad,
+          motivo: 'Ajuste manual desde panel admin',
+        }),
+      },
+    )
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error?.message || data?.message || 'No se pudo ajustar el stock')
+    }
+
+    setStockAdjustByVariant((prev) => ({ ...prev, [variantId]: '' }))
+    setSuccess('Stock ajustado correctamente')
+    await loadData()
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Error ajustando stock')
+  } finally {
+    setAdjustingStockVariantId('')
   }
 }
 

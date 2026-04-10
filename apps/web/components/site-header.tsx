@@ -28,7 +28,6 @@ export default function SiteHeader() {
     { href: '/productos', label: 'Productos' },
     { href: '/nosotros', label: 'Sobre Nosotros' },
     { href: '/contactos', label: 'Contacto' },
-    { href: '/cuenta', label: 'Mi cuenta' },
   ]
 
   return (
@@ -70,11 +69,6 @@ export default function SiteHeader() {
                 </li>
               )
             })}
-            <li>
-              <Link href="/carrito" onClick={() => setMenuOpen(false)}>
-                Carrito
-              </Link>
-            </li>
             <li className="mobile-only">
               <Link href="/login" onClick={() => setMenuOpen(false)}>
                 Iniciar sesion

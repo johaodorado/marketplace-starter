@@ -86,6 +86,7 @@ export default function RegistroPage() {
       const data = await response.json()
 
       localStorage.setItem('accessToken', data.accessToken)
+      window.dispatchEvent(new Event('auth-changed'))
 
       router.push('/cuenta')
       router.refresh()

@@ -66,8 +66,8 @@ export default function AdminProductosPage() {
       }
 
       const [categoriesRes, productsRes] = await Promise.all([
-        fetch('http://localhost:3000/api/categories'),
-        fetch('http://localhost:3000/api/admin/products', {
+        fetch('/api/categories'),
+        fetch('/api/admin/products', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -119,7 +119,7 @@ export default function AdminProductosPage() {
         throw new Error('Debes iniciar sesión como admin')
       }
 
-      const createResponse = await fetch('http://localhost:3000/api/admin/products', {
+      const createResponse = await fetch('/api/admin/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,16 +145,13 @@ export default function AdminProductosPage() {
         const formData = new FormData()
         formData.append('file', imageFile)
 
-        const imageResponse = await fetch(
-          `http://localhost:3000/api/admin/products/${producto.id}/images`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
+        const imageResponse = await fetch(`/api/admin/products/${producto.id}/images`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        )
+          body: formData,
+        })
 
         if (!imageResponse.ok) {
           const data = await imageResponse.json().catch(() => null)
@@ -165,21 +162,18 @@ export default function AdminProductosPage() {
       let variantId: string | null = null
 
       if (variantName.trim()) {
-        const variantResponse = await fetch(
-          `http://localhost:3000/api/admin/products/${producto.id}/variants`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              nombre: variantName.trim(),
-              sku: sku.trim() || undefined,
-              precio: variantPrice ? Number(variantPrice) : undefined,
-            }),
+        const variantResponse = await fetch(`/api/admin/products/${producto.id}/variants`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-        )
+          body: JSON.stringify({
+            nombre: variantName.trim(),
+            sku: sku.trim() || undefined,
+            precio: variantPrice ? Number(variantPrice) : undefined,
+          }),
+        })
 
         if (!variantResponse.ok) {
           const data = await variantResponse.json().catch(() => null)
@@ -192,7 +186,7 @@ export default function AdminProductosPage() {
 
       if (variantId && Number(initialStock || 0) > 0) {
         const stockResponse = await fetch(
-          `http://localhost:3000/api/admin/products/${producto.id}/variants/${variantId}/stock`,
+          `/api/admin/products/${producto.id}/variants/${variantId}/stock`,
           {
             method: 'POST',
             headers: {
@@ -213,19 +207,16 @@ export default function AdminProductosPage() {
       }
 
       if (activar) {
-        const statusResponse = await fetch(
-          `http://localhost:3000/api/admin/products/${producto.id}/status`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              estado: 'ACTIVO',
-            }),
+        const statusResponse = await fetch(`/api/admin/products/${producto.id}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-        )
+          body: JSON.stringify({
+            estado: 'ACTIVO',
+          }),
+        })
 
         if (!statusResponse.ok) {
           const data = await statusResponse.json().catch(() => null)
@@ -255,43 +246,43 @@ export default function AdminProductosPage() {
     }
   }
 
- async function handleToggleStatus(producto: Producto) {
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
+  async function handleToggleStatus(producto: Producto) {
+    try {
+      const token = localStorage.getItem('accessToken')
+      if (!token) {
+        throw new Error('Debes iniciar sesión como admin')
+      }
+
+      setChangingStatusId(producto.id)
+      setError('')
+      setSuccess('')
+
+      const nuevoEstado = producto.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO'
+
+      const res = await fetch(`/api/admin/products/${producto.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          estado: nuevoEstado,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error?.message || data?.message || 'No se pudo actualizar el estado')
+      }
+
+      setSuccess(`Producto ${nuevoEstado === 'ACTIVO' ? 'activado' : 'inactivado'} correctamente`)
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error actualizando estado')
+    } finally {
+      setChangingStatusId('')
     }
-
-    setChangingStatusId(producto.id)
-    setError('')
-    setSuccess('')
-
-    const nuevoEstado = producto.estado === 'ACTIVO' ? 'PAUSADO' : 'ACTIVO'
-
-    const res = await fetch(`http://localhost:3000/api/admin/products/${producto.id}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        estado: nuevoEstado,
-      }),
-    })
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo actualizar el estado')
-    }
-
-    setSuccess(`Producto ${nuevoEstado === 'ACTIVO' ? 'activado' : 'pausado'} correctamente`)
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error actualizando estado')
-  } finally {
-    setChangingStatusId('')
   }
-}
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
@@ -532,10 +523,10 @@ export default function AdminProductosPage() {
                           className="inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm disabled:opacity-60"
                         >
                           {changingStatusId === producto.id
-  ? 'Cambiando...'
-  : producto.estado === 'ACTIVO'
-    ? 'Pausar'
-    : 'Activar'}
+                            ? 'Cambiando...'
+                            : producto.estado === 'ACTIVO'
+                              ? 'Inactivar'
+                              : 'Activar'}
                         </button>
                       </div>
                     </div>

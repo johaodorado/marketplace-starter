@@ -51,7 +51,7 @@ export default function AdminOrdenesPage() {
           throw new Error('Debes iniciar sesión')
         }
 
-        const response = await fetch('http://localhost:3000/api/orders/admin/all', {
+        const response = await fetch('/api/orders/admin/all', {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -76,91 +76,179 @@ export default function AdminOrdenesPage() {
   }, [])
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="mb-6 text-3xl font-bold">Órdenes de la tienda</h1>
+    <main className="page">
+      <section className="page-title-section">
+        <h1>Órdenes admin</h1>
+      </section>
 
-      {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p>Cargando órdenes...</p>
-        </div>
-      ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-white p-6 text-red-600">
-          <p>{error}</p>
-        </div>
-      ) : orders.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-600">No hay órdenes registradas.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <article
-              key={order.id}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Orden</p>
-                  <h2 className="font-semibold">{order.id}</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Fecha: {new Date(order.creadoEn).toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="text-left sm:text-right">
-                  <p className="text-sm text-slate-500">Estado de la orden</p>
-                  <p className="font-medium">{order.estado}</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Pago: {order.pago?.estado ?? 'SIN_PAGO'}
-                  </p>
-                  <p className="mt-1 text-lg font-bold">
-                    {order.moneda} {Number(order.total).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm text-slate-500">Comprador</p>
-                  <p className="font-medium">
-                    {order.comprador.nombre ?? ''} {order.comprador.apellido ?? ''}
-                  </p>
-                  <p className="text-sm text-slate-500">{order.comprador.email}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-slate-500">Items</p>
-                  <p className="font-medium">{order.items.length}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-xl bg-slate-50 px-4 py-3 text-sm"
-                  >
-                    <p className="font-medium">{item.tituloSnapshot}</p>
-                    <p className="text-slate-500">Cantidad: {item.cantidad}</p>
-                    <p className="text-slate-500">
-                      Precio: {item.monedaSnapshot} {Number(item.precioUnitarioSnapshot).toFixed(2)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5">
-                <Link
-                  href={`/admin/ordenes/${order.id}`}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
+      <section style={{ background: 'var(--gradient-soft)', paddingTop: '2rem', paddingBottom: '3.5rem' }}>
+        <div className="mx-auto max-w-6xl px-6">
+          {loading ? (
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '1px solid var(--color-border)',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-suave)'
+            }}>
+              <p>Cargando órdenes...</p>
+            </div>
+          ) : error ? (
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '2px solid #ef5350',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-suave)',
+              color: '#d32f2f',
+              fontWeight: 600
+            }}>
+              <p>{error}</p>
+            </div>
+          ) : orders.length === 0 ? (
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '1px solid var(--color-border)',
+              background: '#ffffff',
+              padding: '2rem',
+              boxShadow: 'var(--sombra-suave)',
+              textAlign: 'center'
+            }}>
+              <p style={{ color: '#667780' }}>No hay órdenes registradas.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {orders.map((order) => (
+                <article
+                  key={order.id}
+                  style={{
+                    borderRadius: '2rem',
+                    border: '1px solid var(--color-border)',
+                    background: '#ffffff',
+                    padding: '1.5rem',
+                    boxShadow: 'var(--sombra-media)'
+                  }}
                 >
-                  Ver detalle
-                </Link>
-              </div>
-            </article>
-          ))}
+                  <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '1rem', alignItems: 'start' }}>
+                      <div>
+                        <p style={{ fontSize: '0.875rem', color: '#667780' }}>Orden</p>
+                        <h2 style={{ marginTop: '0.25rem', fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                          {order.id}
+                        </h2>
+                        <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#667780' }}>
+                          Fecha: {new Date(order.creadoEn).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div style={{
+                        borderRadius: '1.5rem',
+                        background: 'var(--color-surface-soft)',
+                        paddingLeft: '1rem',
+                        paddingRight: '1rem',
+                        paddingTop: '0.75rem',
+                        paddingBottom: '0.75rem',
+                        border: '1px solid var(--color-border)',
+                        textAlign: 'right'
+                      }}>
+                        <p style={{ fontSize: '0.875rem', color: '#667780' }}>Estado de orden</p>
+                        <p style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                          {order.estado}
+                        </p>
+                        <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#667780' }}>
+                          Pago: {order.pago?.estado ?? 'SIN_PAGO'}
+                        </p>
+                        <p style={{ marginTop: '0.625rem', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                          {order.moneda} {Number(order.total).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div style={{
+                        borderRadius: '1rem',
+                        border: '1px solid var(--color-border)',
+                        background: 'var(--color-surface-soft)',
+                        padding: '1rem'
+                      }}>
+                        <p style={{ fontSize: '0.875rem', color: '#667780' }}>Comprador</p>
+                        <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                          {order.comprador.nombre ?? ''} {order.comprador.apellido ?? ''}
+                        </p>
+                        <p style={{ fontSize: '0.875rem', color: '#667780', wordBreak: 'break-all', marginTop: '0.25rem' }}>
+                          {order.comprador.email}
+                        </p>
+                      </div>
+
+                      <div style={{
+                        borderRadius: '1rem',
+                        border: '1px solid var(--color-border)',
+                        background: 'var(--color-surface-soft)',
+                        padding: '1rem'
+                      }}>
+                        <p style={{ fontSize: '0.875rem', color: '#667780' }}>Items</p>
+                        <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)', fontSize: '1.125rem' }}>
+                          {order.items.length}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {order.items.map((item) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          borderRadius: '1rem',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface-soft)',
+                          paddingLeft: '1rem',
+                          paddingRight: '1rem',
+                          paddingTop: '1rem',
+                          paddingBottom: '1rem',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+                          <div>
+                            <p style={{ fontWeight: 600, color: 'var(--color-text)' }}>{item.tituloSnapshot}</p>
+                            <p style={{ color: '#667780', marginTop: '0.25rem' }}>Cantidad: {item.cantidad}</p>
+                          </div>
+
+                          <p style={{ fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
+                            {item.monedaSnapshot} {Number(item.precioUnitarioSnapshot).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: '1rem' }}>
+                    <Link
+                      href={`/admin/ordenes/${order.id}`}
+                      style={{
+                        display: 'inline-block',
+                        borderRadius: '999px',
+                        border: '2px solid var(--color-border)',
+                        paddingLeft: '1rem',
+                        paddingRight: '1rem',
+                        paddingTop: '0.375rem',
+                        paddingBottom: '0.375rem',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        background: '#ffffff',
+                        color: 'var(--color-text)'
+                      }}
+                    >
+                      Ver detalle
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </section>
     </main>
   )
 }

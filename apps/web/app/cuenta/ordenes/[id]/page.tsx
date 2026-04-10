@@ -74,7 +74,7 @@ export default function OrdenDetallePage() {
         }
 
         const response = await fetch(
-          `http://localhost:3000/api/orders/me/${orderId}`,
+          `/api/orders/me/${orderId}`,
           {
             method: 'GET',
             headers: {
@@ -104,22 +104,46 @@ export default function OrdenDetallePage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="mb-6 text-3xl font-bold">Detalle de orden</h1>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p>Cargando orden...</p>
-        </div>
+      <main className="page">
+        <section className="page-title-section">
+          <h1>Detalle de orden</h1>
+        </section>
+        <section style={{ background: 'var(--gradient-soft)', paddingTop: '2rem', paddingBottom: '3.5rem' }}>
+          <div className="mx-auto max-w-6xl px-6">
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '1px solid var(--color-border)',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-suave)'
+            }}>
+              <p>Cargando orden...</p>
+            </div>
+          </div>
+        </section>
       </main>
     )
   }
 
   if (error || !order) {
     return (
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="mb-6 text-3xl font-bold">Detalle de orden</h1>
-        <div className="rounded-2xl border border-red-200 bg-white p-6 text-red-600">
-          <p>{error || 'No se encontró la orden'}</p>
-        </div>
+      <main className="page">
+        <section className="page-title-section">
+          <h1>Detalle de orden</h1>
+        </section>
+        <section style={{ background: 'var(--gradient-soft)', paddingTop: '2rem', paddingBottom: '3.5rem' }}>
+          <div className="mx-auto max-w-6xl px-6">
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '2px solid #ef5350',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-suave)'
+            }}>
+              <p style={{ color: '#d32f2f', fontWeight: 600 }}>{error || 'No se encontró la orden'}</p>
+            </div>
+          </div>
+        </section>
       </main>
     )
   }
@@ -130,161 +154,302 @@ export default function OrdenDetallePage() {
   const revision = order.pago?.externalMeta?.revision
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">Detalle de orden</h1>
-          <p className="mt-1 text-sm text-slate-500">{order.id}</p>
-        </div>
+    <main className="page">
+      <section className="page-title-section">
+        <h1>Detalle de orden</h1>
+      </section>
 
-        <Link
-          href="/cuenta/ordenes"
-          className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
-        >
-          Volver a mis órdenes
-        </Link>
-      </div>
+      <section style={{ background: 'var(--gradient-soft)', paddingTop: '2rem', paddingBottom: '3.5rem' }}>
+        <div className="mx-auto max-w-6xl px-6">
+          <Link
+            href="/cuenta/ordenes"
+            style={{
+              display: 'inline-flex',
+              borderRadius: '999px',
+              border: '2px solid var(--color-border)',
+              paddingLeft: '1rem',
+              paddingRight: '1rem',
+              paddingTop: '0.375rem',
+              paddingBottom: '0.375rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              background: '#ffffff',
+              color: 'var(--color-text)',
+              marginBottom: '1.5rem'
+            }}
+          >
+            ← Volver a mis órdenes
+          </Link>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <section className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">Resumen</h2>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-sm text-slate-500">Estado de la orden</p>
-                <p className="font-medium">{order.estado}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-slate-500">Estado del pago</p>
-                <p className="font-medium">{order.pago?.estado ?? 'SIN_PAGO'}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-slate-500">Fecha</p>
-                <p className="font-medium">
-                  {new Date(order.creadoEn).toLocaleString()}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm text-slate-500">Total</p>
-                <p className="font-medium">
-                  {order.moneda} {Number(order.total).toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">Productos</h2>
-
-            <div className="mt-4 space-y-3">
-              {order.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl bg-slate-50 px-4 py-4"
-                >
-                  <p className="font-medium">{item.tituloSnapshot}</p>
-
-                  <div className="mt-2 grid gap-2 sm:grid-cols-3 text-sm text-slate-600">
-                    <p>Cantidad: {item.cantidad}</p>
-                    <p>SKU: {item.skuSnapshot ?? 'N/A'}</p>
-                    <p>
-                      Precio: {item.monedaSnapshot}{' '}
-                      {Number(item.precioUnitarioSnapshot).toFixed(2)}
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'lg:1fr 360px' }}>
+            <section style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{
+                borderRadius: '2rem',
+                border: '1px solid var(--color-border)',
+                background: '#ffffff',
+                padding: '1.5rem',
+                boxShadow: 'var(--sombra-media)'
+              }}>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780', marginBottom: '0.5rem' }}>
+                      Orden ID
+                    </p>
+                    <p style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text)', wordBreak: 'break-all' }}>
+                      {order.id}
+                    </p>
+                    <p style={{ fontSize: '0.875rem', color: '#667780', marginTop: '0.5rem' }}>
+                      Creada el {new Date(order.creadoEn).toLocaleString()}
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">Pago reportado</h2>
-
-            {order.pago ? (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm text-slate-500">Referencia</p>
-                  <p className="font-medium">{referencia || 'No registrada'}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-slate-500">Método</p>
-                  <p className="font-medium">
-                    {order.pago.externalMeta?.metodo || 'No registrado'}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-slate-500">Observación</p>
-                  <p className="font-medium">{observacion || 'Sin observación'}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-slate-500">Reportado en</p>
-                  <p className="font-medium">
-                    {reportadoEn ? new Date(reportadoEn).toLocaleString() : 'No reportado'}
-                  </p>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <p className="text-sm text-slate-500">Revisión admin</p>
-                  <p className="font-medium">
-                    {revision?.estado || 'Pendiente de revisión'}
-                  </p>
-
-                  {revision?.observacion ? (
-                    <p className="mt-2 text-sm text-slate-600">
-                      {revision.observacion}
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div style={{
+                    borderRadius: '1rem',
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-surface-soft)',
+                    padding: '1rem'
+                  }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780' }}>
+                      Estado de orden
                     </p>
-                  ) : null}
+                    <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                      {order.estado}
+                    </p>
+                  </div>
+
+                  <div style={{
+                    borderRadius: '1rem',
+                    border: '1px solid var(--color-border)',
+                    background: 'var(--color-surface-soft)',
+                    padding: '1rem'
+                  }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780' }}>
+                      Estado del pago
+                    </p>
+                    <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                      {order.pago?.estado ?? 'SIN PAGO'}
+                    </p>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <p className="mt-4 text-slate-600">Todavía no existe un pago asociado.</p>
-            )}
+
+              <div style={{
+                borderRadius: '2rem',
+                border: '1px solid var(--color-border)',
+                background: '#ffffff',
+                padding: '1.5rem',
+                boxShadow: 'var(--sombra-media)'
+              }}>
+                <h2 style={{ fontSize: '1.1875rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                  Productos
+                </h2>
+
+                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {order.items.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        borderRadius: '1rem',
+                        border: '1px solid var(--color-border)',
+                        background: 'var(--color-surface-soft)',
+                        paddingLeft: '1rem',
+                        paddingRight: '1rem',
+                        paddingTop: '1rem',
+                        paddingBottom: '1rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'start' }}>
+                        <div>
+                          <p style={{ fontWeight: 600, color: 'var(--color-text)' }}>{item.tituloSnapshot}</p>
+                          <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#667780' }}>
+                            SKU: {item.skuSnapshot ?? 'N/A'} | Cantidad: {item.cantidad}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          borderRadius: '999px',
+                          background: '#ffffff',
+                          paddingLeft: '0.75rem',
+                          paddingRight: '0.75rem',
+                          paddingTop: '0.25rem',
+                          paddingBottom: '0.25rem',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: 'var(--color-text)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {item.monedaSnapshot} {Number(item.precioUnitarioSnapshot).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{
+                borderRadius: '2rem',
+                border: '1px solid var(--color-border)',
+                background: '#ffffff',
+                padding: '1.5rem',
+                boxShadow: 'var(--sombra-media)'
+              }}>
+                <h2 style={{ fontSize: '1.1875rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                  Pago reportado
+                </h2>
+
+                {order.pago ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p style={{ fontSize: '0.875rem', color: '#667780' }}>Referencia</p>
+                      <p style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {referencia || 'No registrada'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p style={{ fontSize: '0.875rem', color: '#667780' }}>Método</p>
+                      <p style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {order.pago.externalMeta?.metodo || 'No registrado'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p style={{ fontSize: '0.875rem', color: '#667780' }}>Observación</p>
+                      <p style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {observacion || 'Sin observación'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p style={{ fontSize: '0.875rem', color: '#667780' }}>Reportado en</p>
+                      <p style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {reportadoEn ? new Date(reportadoEn).toLocaleString() : 'No reportado'}
+                      </p>
+                    </div>
+
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <p style={{ fontSize: '0.875rem', color: '#667780' }}>Revisión admin</p>
+                      <p style={{ marginTop: '0.25rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                        {revision?.estado || 'Pendiente de revisión'}
+                      </p>
+
+                      {revision?.observacion ? (
+                        <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#667780' }}>
+                          {revision.observacion}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: '1rem', color: '#667780' }}>Todavía no existe un pago asociado.</p>
+                )}
+              </div>
+            </section>
+
+            <aside style={{
+              height: 'fit-content',
+              borderRadius: '2rem',
+              border: '1px solid var(--color-border)',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-media)'
+            }}>
+              <h2 style={{ fontSize: '1.1875rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                Totales
+              </h2>
+
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderRadius: '1rem',
+                  background: 'var(--color-surface-soft)',
+                  paddingLeft: '1rem',
+                  paddingRight: '1rem',
+                  paddingTop: '0.75rem',
+                  paddingBottom: '0.75rem'
+                }}>
+                  <span style={{ color: '#667780' }}>Subtotal</span>
+                  <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+                    {order.moneda} {Number(order.subtotal).toFixed(2)}
+                  </span>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderRadius: '1rem',
+                  background: 'var(--color-surface-soft)',
+                  paddingLeft: '1rem',
+                  paddingRight: '1rem',
+                  paddingTop: '0.75rem',
+                  paddingBottom: '0.75rem'
+                }}>
+                  <span style={{ color: '#667780' }}>Comisión</span>
+                  <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+                    {order.moneda} {Number(order.comision).toFixed(2)}
+                  </span>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  borderRadius: '1rem',
+                  background: 'var(--gradient-brand)',
+                  paddingLeft: '1rem',
+                  paddingRight: '1rem',
+                  paddingTop: '0.75rem',
+                  paddingBottom: '0.75rem',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: '#ffffff'
+                }}>
+                  <span>Total</span>
+                  <span>
+                    {order.moneda} {Number(order.total).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {order.estado === 'CREADA' ? (
+                <Link
+                  href={`/pago/${order.id}`}
+                  style={{
+                    marginTop: '1rem',
+                    display: 'block',
+                    borderRadius: '999px',
+                    paddingLeft: '1rem',
+                    paddingRight: '1rem',
+                    paddingTop: '0.625rem',
+                    paddingBottom: '0.625rem',
+                    textAlign: 'center',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    background: 'var(--color-primary)',
+                    boxShadow: '0 2px 8px rgba(43, 58, 140, 0.2)',
+                    cursor: 'pointer'
+                  }}
+                  onMouseOver={(e) => {
+                    (e.target as HTMLElement).style.background = 'var(--color-primary-700)'
+                    (e.target as HTMLElement).style.boxShadow = '0 4px 12px rgba(43, 58, 140, 0.3)'
+                  }}
+                  onMouseOut={(e) => {
+                    (e.target as HTMLElement).style.background = 'var(--color-primary)'
+                    (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(43, 58, 140, 0.2)'
+                  }}
+                >
+                  Ir a pagar
+                </Link>
+              ) : null}
+            </aside>
           </div>
-        </section>
-
-        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Totales</h2>
-
-          <div className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span>Subtotal</span>
-              <span>
-                {order.moneda} {Number(order.subtotal).toFixed(2)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span>Comisión</span>
-              <span>
-                {order.moneda} {Number(order.comision).toFixed(2)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between text-base font-bold">
-              <span>Total</span>
-              <span>
-                {order.moneda} {Number(order.total).toFixed(2)}
-              </span>
-            </div>
-          </div>
-
-          {order.estado === 'CREADA' ? (
-            <Link
-              href={`/pago/${order.id}`}
-              className="mt-6 block rounded-xl bg-slate-900 px-4 py-3 text-center text-white"
-            >
-              Ir a pagar
-            </Link>
-          ) : null}
-        </aside>
-      </div>
+        </div>
+      </section>
     </main>
   )
 }

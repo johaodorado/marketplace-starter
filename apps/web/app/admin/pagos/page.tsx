@@ -58,7 +58,7 @@ export default function AdminPagosPage() {
         throw new Error('Debes iniciar sesión')
       }
 
-      const response = await fetch('http://localhost:3000/api/payments/admin/reported', {
+      const response = await fetch('/api/payments/admin/reported', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ export default function AdminPagosPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/payments/admin/${paymentId}/approve`,
+        `/api/payments/admin/${paymentId}/approve`,
         {
           method: 'PATCH',
           headers: {
@@ -133,7 +133,7 @@ export default function AdminPagosPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/payments/admin/${paymentId}/reject`,
+        `/api/payments/admin/${paymentId}/reject`,
         {
           method: 'PATCH',
           headers: {
@@ -160,123 +160,257 @@ export default function AdminPagosPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="mb-6 text-3xl font-bold">Pagos reportados</h1>
+    <main className="page">
+      <section className="page-title-section">
+        <h1>Pagos admin</h1>
+      </section>
 
-      {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p>Cargando pagos...</p>
-        </div>
-      ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-white p-6 text-red-600">
-          <p>{error}</p>
-        </div>
-      ) : payments.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-600">No hay pagos reportados pendientes.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {payments.map((payment) => (
-            <article
-              key={payment.id}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
-                <div>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+      <section style={{ background: 'var(--gradient-soft)', paddingTop: '2rem', paddingBottom: '3.5rem' }}>
+        <div className="mx-auto max-w-6xl px-6">
+          {loading ? (
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '1px solid var(--color-border)',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-suave)'
+            }}>
+              <p>Cargando pagos...</p>
+            </div>
+          ) : error ? (
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '2px solid #ef5350',
+              background: '#ffffff',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-suave)',
+              color: '#d32f2f',
+              fontWeight: 600
+            }}>
+              <p>{error}</p>
+            </div>
+          ) : payments.length === 0 ? (
+            <div style={{
+              borderRadius: '1.5rem',
+              border: '1px solid var(--color-border)',
+              background: '#ffffff',
+              padding: '2rem',
+              boxShadow: 'var(--sombra-suave)',
+              textAlign: 'center'
+            }}>
+              <p style={{ color: '#667780' }}>No hay pagos reportados pendientes.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {payments.map((payment) => (
+                <article
+                  key={payment.id}
+                  style={{
+                    borderRadius: '2rem',
+                    border: '1px solid var(--color-border)',
+                    background: '#ffffff',
+                    padding: '1.5rem',
+                    boxShadow: 'var(--sombra-media)'
+                  }}
+                >
+                  <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'lg:1fr 280px' }}>
                     <div>
-                      <p className="text-sm text-slate-500">Pago</p>
-                      <h2 className="font-semibold">{payment.id}</h2>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Orden: {payment.orden.id}
-                      </p>
-                    </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'start' }}>
+                        <div>
+                          <p style={{ fontSize: '0.875rem', color: '#667780' }}>Pago</p>
+                          <h2 style={{ marginTop: '0.25rem', fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                            {payment.id}
+                          </h2>
+                          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#667780' }}>
+                            Orden: {payment.orden.id}
+                          </p>
+                        </div>
 
-                    <div className="text-left lg:text-right">
-                      <p className="text-sm text-slate-500">Monto</p>
-                      <p className="text-lg font-bold">
-                        {payment.moneda} {Number(payment.monto).toFixed(2)}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Estado: {payment.estado}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-sm text-slate-500">Comprador</p>
-                      <p className="font-medium">
-                        {payment.orden.comprador.nombre ?? ''} {payment.orden.comprador.apellido ?? ''}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {payment.orden.comprador.email}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-500">Referencia</p>
-                      <p className="font-medium">
-                        {payment.externalMeta?.referencia || 'No registrada'}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        Método: {payment.externalMeta?.metodo || 'No registrado'}
-                      </p>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <p className="text-sm text-slate-500">Observación del cliente</p>
-                      <p className="font-medium">
-                        {payment.externalMeta?.observacion || 'Sin observación'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 space-y-2">
-                    {payment.orden.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-xl bg-slate-50 px-4 py-3 text-sm"
-                      >
-                        <p className="font-medium">{item.tituloSnapshot}</p>
-                        <p className="text-slate-500">Cantidad: {item.cantidad}</p>
-                        <p className="text-slate-500">
-                          Precio: {item.monedaSnapshot} {Number(item.precioUnitarioSnapshot).toFixed(2)}
-                        </p>
+                        <div style={{
+                          borderRadius: '1.5rem',
+                          background: 'var(--color-surface-soft)',
+                          paddingLeft: '1rem',
+                          paddingRight: '1rem',
+                          paddingTop: '0.75rem',
+                          paddingBottom: '0.75rem',
+                          border: '1px solid var(--color-border)',
+                          textAlign: 'right'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', color: '#667780' }}>Monto</p>
+                          <p style={{ marginTop: '0.25rem', fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                            {payment.moneda} {Number(payment.monto).toFixed(2)}
+                          </p>
+                          <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#667780' }}>
+                            Estado: {payment.estado}
+                          </p>
+                        </div>
                       </div>
-                    ))}
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div style={{
+                          borderRadius: '1rem',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface-soft)',
+                          padding: '1rem'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', color: '#667780' }}>Comprador</p>
+                          <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                            {payment.orden.comprador.nombre ?? ''} {payment.orden.comprador.apellido ?? ''}
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: '#667780', wordBreak: 'break-all', marginTop: '0.25rem' }}>
+                            {payment.orden.comprador.email}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          borderRadius: '1rem',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface-soft)',
+                          padding: '1rem'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', color: '#667780' }}>Referencia</p>
+                          <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                            {payment.externalMeta?.referencia || 'No registrada'}
+                          </p>
+                          <p style={{ fontSize: '0.875rem', color: '#667780', marginTop: '0.25rem' }}>
+                            Método: {payment.externalMeta?.metodo || 'No registrado'}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          borderRadius: '1rem',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface-soft)',
+                          padding: '1rem',
+                          gridColumn: '1 / -1'
+                        }}>
+                          <p style={{ fontSize: '0.875rem', color: '#667780' }}>Observación del cliente</p>
+                          <p style={{ marginTop: '0.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
+                            {payment.externalMeta?.observacion || 'Sin observación'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {payment.orden.items.map((item) => (
+                          <div
+                            key={item.id}
+                            style={{
+                              borderRadius: '1rem',
+                              border: '1px solid var(--color-border)',
+                              background: 'var(--color-surface-soft)',
+                              paddingLeft: '1rem',
+                              paddingRight: '1rem',
+                              paddingTop: '1rem',
+                              paddingBottom: '1rem',
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+                              <div>
+                                <p style={{ fontWeight: 600, color: 'var(--color-text)' }}>{item.tituloSnapshot}</p>
+                                <p style={{ color: '#667780', marginTop: '0.25rem' }}>Cantidad: {item.cantidad}</p>
+                              </div>
+
+                              <p style={{ fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
+                                {item.monedaSnapshot} {Number(item.precioUnitarioSnapshot).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <aside style={{
+                      borderRadius: '2rem',
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface-soft)',
+                      padding: '1.25rem'
+                    }}>
+                      <h3 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                        Acciones
+                      </h3>
+
+                      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleApprove(payment.id)}
+                          disabled={actionLoadingId === payment.id}
+                          style={{
+                            width: '100%',
+                            borderRadius: '999px',
+                            paddingLeft: '1rem',
+                            paddingRight: '1rem',
+                            paddingTop: '0.625rem',
+                            paddingBottom: '0.625rem',
+                            fontWeight: 700,
+                            color: '#ffffff',
+                            background: 'var(--color-primary)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            opacity: actionLoadingId === payment.id ? 0.6 : 1,
+                            boxShadow: '0 2px 8px rgba(43, 58, 140, 0.2)',
+                            transition: 'all 200ms ease'
+                          }}
+                          onMouseOver={(e) => {
+                            if (actionLoadingId !== payment.id) {
+                              (e.target as HTMLButtonElement).style.background = 'var(--color-primary-700)';
+                              (e.target as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(43, 58, 140, 0.3)';
+                            }
+                          }}
+                          onMouseOut={(e) => {
+                            if (actionLoadingId !== payment.id) {
+                              (e.target as HTMLButtonElement).style.background = 'var(--color-primary)';
+                              (e.target as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(43, 58, 140, 0.2)';
+                            }
+                          }}
+                        >
+                          {actionLoadingId === payment.id ? 'Procesando...' : 'Aprobar pago'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleReject(payment.id)}
+                          disabled={actionLoadingId === payment.id}
+                          style={{
+                            width: '100%',
+                            borderRadius: '999px',
+                            paddingLeft: '1rem',
+                            paddingRight: '1rem',
+                            paddingTop: '0.625rem',
+                            paddingBottom: '0.625rem',
+                            fontWeight: 700,
+                            color: '#dc2626',
+                            background: '#ffffff',
+                            border: '2px solid #fca5a5',
+                            cursor: 'pointer',
+                            opacity: actionLoadingId === payment.id ? 0.6 : 1,
+                            transition: 'all 200ms ease'
+                          }}
+                          onMouseOver={(e) => {
+                            if (actionLoadingId !== payment.id) {
+                              (e.target as HTMLButtonElement).style.background = '#fee2e2';
+                              (e.target as HTMLButtonElement).style.borderColor = '#dc2626';
+                            }
+                          }}
+                          onMouseOut={(e) => {
+                            if (actionLoadingId !== payment.id) {
+                              (e.target as HTMLButtonElement).style.background = '#ffffff';
+                              (e.target as HTMLButtonElement).style.borderColor = '#fca5a5';
+                            }
+                          }}
+                        >
+                          {actionLoadingId === payment.id ? 'Procesando...' : 'Rechazar pago'}
+                        </button>
+                      </div>
+                    </aside>
                   </div>
-                </div>
-
-                <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-lg font-semibold">Acciones</h3>
-
-                  <div className="mt-4 space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => handleApprove(payment.id)}
-                      disabled={actionLoadingId === payment.id}
-                      className="w-full rounded-xl bg-slate-900 px-4 py-3 text-white disabled:opacity-60"
-                    >
-                      {actionLoadingId === payment.id ? 'Procesando...' : 'Aprobar pago'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleReject(payment.id)}
-                      disabled={actionLoadingId === payment.id}
-                      className="w-full rounded-xl border border-red-300 px-4 py-3 text-red-600 disabled:opacity-60"
-                    >
-                      {actionLoadingId === payment.id ? 'Procesando...' : 'Rechazar pago'}
-                    </button>
-                  </div>
-                </aside>
-              </div>
-            </article>
-          ))}
+                </article>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </section>
     </main>
   )
 }
