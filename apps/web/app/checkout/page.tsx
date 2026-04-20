@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { clearCart, getCart } from '../../lib/cart'
+import { CartItem, clearCart, getCart } from '../../lib/cart'
 
 type FormData = {
   apellido: string
@@ -21,6 +21,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [items, setItems] = useState<CartItem[]>([])
   const [formData, setFormData] = useState<FormData>({
     apellido: '',
     nombre: '',
@@ -32,7 +34,11 @@ export default function CheckoutPage() {
     codigoPostal: '',
   })
 
-  const items = getCart()
+  // Fix hydration: cargar carrito solo en el cliente
+  useEffect(() => {
+    setItems(getCart())
+    setMounted(true)
+  }, [])
 
   const subtotal = useMemo(() => {
     return items.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
@@ -43,16 +49,14 @@ export default function CheckoutPage() {
   }, [subtotal])
 
   const envio = 10.0
+
   const total = useMemo(() => {
     return Number((subtotal + impuestos + envio).toFixed(2))
   }, [subtotal, impuestos])
 
   function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   async function handleCreateOrder() {
@@ -71,12 +75,13 @@ export default function CheckoutPage() {
         throw new Error('Tu carrito está vacío')
       }
 
-      // Validar campos del formulario
       if (!formData.nombre || !formData.apellido || !formData.correo || !formData.direccion) {
         throw new Error('Por favor completa todos los campos requeridos')
       }
 
-      const response = await fetch('http://localhost:3000/api/orders', {
+      // Fix: eliminado shippingData que la API rechazaba con forbidNonWhitelisted
+      // Fix: usando /api en lugar de localhost:3000 para que funcione en Docker/prod
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,16 +93,6 @@ export default function CheckoutPage() {
             variantId: item.variantId,
             cantidad: item.cantidad,
           })),
-          shippingData: {
-            apellido: formData.apellido,
-            nombre: formData.nombre,
-            correo: formData.correo,
-            telefono: formData.telefono,
-            direccion: formData.direccion,
-            ciudad: formData.ciudad,
-            provincia: formData.provincia,
-            codigoPostal: formData.codigoPostal,
-          },
         }),
       })
 
@@ -112,7 +107,7 @@ export default function CheckoutPage() {
 
       clearCart()
       setSuccess(true)
-      
+
       setTimeout(() => {
         router.push(`/pago/${order.id}`)
       }, 1500)
@@ -123,13 +118,24 @@ export default function CheckoutPage() {
     }
   }
 
+  // Fix hydration: mostrar loading neutral mientras se monta en cliente
+  if (!mounted) {
+    return (
+      <main className="page">
+        <section className="checkout-page-section">
+          <h1>Checkout</h1>
+          <p style={{ color: '#667780' }}>Cargando...</p>
+        </section>
+      </main>
+    )
+  }
+
   if (items.length === 0) {
     return (
       <main className="page">
         <section className="checkout-empty">
           <h1>Checkout</h1>
           <p className="empty-state">Tu carrito está vacío</p>
-
           <Link href="/productos" className="btn-product">
             Volver a productos
           </Link>

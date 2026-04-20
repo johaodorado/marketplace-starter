@@ -435,13 +435,15 @@ export default function OrdenDetallePage() {
                     cursor: 'pointer'
                   }}
                   onMouseOver={(e) => {
-                    (e.target as HTMLElement).style.background = 'var(--color-primary-700)'
-                    (e.target as HTMLElement).style.boxShadow = '0 4px 12px rgba(43, 58, 140, 0.3)'
+                    const el = e.currentTarget as HTMLElement
+                    el.style.background = '#222f73'
+                    el.style.boxShadow = '0 4px 12px rgba(43, 58, 140, 0.3)'
                   }}
                   onMouseOut={(e) => {
-                    (e.target as HTMLElement).style.background = 'var(--color-primary)'
-                    (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(43, 58, 140, 0.2)'
-                  }}
+                  const el = e.currentTarget as HTMLElement
+                  el.style.background = '#2b3a8c'
+                  el.style.boxShadow = '0 2px 8px rgba(43, 58, 140, 0.2)'
+                }}
                 >
                   Ir a pagar
                 </Link>

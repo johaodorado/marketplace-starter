@@ -28,37 +28,61 @@ type Orden = {
   pago: OrdenPago | null
 }
 
+type Filtro = 'TODAS' | 'CREADA' | 'PAGADA' | 'CANCELADA'
+
+function estadoOrdenStyle(estado: string) {
+  switch (estado) {
+    case 'PAGADA':    return { bg: '#dcfce7', color: '#166534', border: '#86efac', label: 'Pagada' }
+    case 'CREADA':    return { bg: '#fef9c3', color: '#854d0e', border: '#fde047', label: 'Pendiente' }
+    case 'CANCELADA': return { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5', label: 'Cancelada' }
+    case 'ENVIADA':   return { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd', label: 'Enviada' }
+    case 'ENTREGADA': return { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7', label: 'Entregada' }
+    default:          return { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1', label: estado }
+  }
+}
+
+function estadoPagoStyle(estado: string) {
+  switch (estado) {
+    case 'APROBADO':   return { bg: '#dcfce7', color: '#166534', label: 'Pago aprobado' }
+    case 'PENDIENTE':  return { bg: '#fef9c3', color: '#854d0e', label: 'Pago pendiente' }
+    case 'RECHAZADO':  return { bg: '#fee2e2', color: '#991b1b', label: 'Pago rechazado' }
+    default:           return { bg: '#f1f5f9', color: '#475569', label: estado }
+  }
+}
+
+function Badge({ text, bg, color }: { text: string; bg: string; color: string }) {
+  return (
+    <span style={{
+      borderRadius: '999px', padding: '0.2rem 0.75rem',
+      fontSize: '0.72rem', fontWeight: 700,
+      background: bg, color,
+    }}>
+      {text}
+    </span>
+  )
+}
+
 export default function MisOrdenesPage() {
   const [orders, setOrders] = useState<Orden[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeFilter, setActiveFilter] = useState<'TODAS' | 'CREADA' | 'PAGADA' | 'CANCELADA'>('TODAS')
+  const [activeFilter, setActiveFilter] = useState<Filtro>('TODAS')
 
   async function loadOrders() {
     try {
       setLoading(true)
       setError('')
-
       const token = localStorage.getItem('accessToken')
+      if (!token) { setOrders([]); throw new Error('Debes iniciar sesión para ver tus órdenes') }
 
-      if (!token) {
-        setOrders([])
-        throw new Error('Debes iniciar sesión para ver tus órdenes')
-      }
-
-      const response = await fetch('/api/orders/me', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch('/api/orders/me', {
+        headers: { Authorization: `Bearer ${token}` },
       })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null)
-        throw new Error(data?.error?.message || data?.message || 'No se pudieron cargar tus órdenes')
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.message || 'No se pudieron cargar tus órdenes')
       }
-
-      const data = await response.json()
+      const data = await res.json()
       setOrders(Array.isArray(data) ? data : [])
     } catch (err) {
       setOrders([])
@@ -70,20 +94,10 @@ export default function MisOrdenesPage() {
 
   useEffect(() => {
     void loadOrders()
-
-    const onAuthChanged = () => {
-      void loadOrders()
-    }
-
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === 'accessToken') {
-        void loadOrders()
-      }
-    }
-
+    const onAuthChanged = () => void loadOrders()
+    const onStorage = (e: StorageEvent) => { if (e.key === 'accessToken') void loadOrders() }
     window.addEventListener(AUTH_CHANGED_EVENT, onAuthChanged)
     window.addEventListener('storage', onStorage)
-
     return () => {
       window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChanged)
       window.removeEventListener('storage', onStorage)
@@ -91,441 +105,254 @@ export default function MisOrdenesPage() {
   }, [])
 
   const filteredOrders = useMemo(() => {
-    if (activeFilter === 'TODAS') {
-      return orders
-    }
-
-    return orders.filter((order) => order.estado === activeFilter)
+    if (activeFilter === 'TODAS') return orders
+    return orders.filter((o) => o.estado === activeFilter)
   }, [activeFilter, orders])
 
-  const summary = useMemo(() => {
-    const totalOrders = orders.length
-    const pendingOrders = orders.filter((order) => order.estado === 'CREADA').length
-    const totalValue = orders.reduce((acc, order) => acc + Number(order.total || 0), 0)
+  const summary = useMemo(() => ({
+    total: orders.length,
+    pendientes: orders.filter((o) => o.estado === 'CREADA').length,
+    valor: orders.reduce((acc, o) => acc + Number(o.total || 0), 0),
+  }), [orders])
 
-    return {
-      totalOrders,
-      pendingOrders,
-      totalValue,
-    }
-  }, [orders])
-
-  function getStatusLabel(status: string) {
-    switch (status) {
-      case 'CREADA':
-        return 'Pendiente'
-      case 'PAGADA':
-        return 'Pagada'
-      case 'CANCELADA':
-        return 'Cancelada'
-      default:
-        return status
-    }
-  }
-
-  function getStatusClass(status: string) {
-    switch (status) {
-      case 'CREADA':
-        return 'bg-amber-100 text-amber-800'
-      case 'PAGADA':
-        return 'bg-emerald-100 text-emerald-800'
-      case 'CANCELADA':
-        return 'bg-rose-100 text-rose-800'
-      default:
-        return 'bg-slate-100 text-slate-700'
-    }
-  }
-
-  function getPaymentLabel(payment: OrdenPago | null) {
-    if (!payment) {
-      return 'Sin pago'
-    }
-
-    switch (payment.estado) {
-      case 'APROBADO':
-        return 'Pago aprobado'
-      case 'PENDIENTE':
-        return 'Pago pendiente'
-      case 'RECHAZADO':
-        return 'Pago rechazado'
-      default:
-        return payment.estado
-    }
-  }
+  const filtros: { key: Filtro; label: string }[] = [
+    { key: 'TODAS',    label: 'Todas' },
+    { key: 'CREADA',   label: 'Pendientes' },
+    { key: 'PAGADA',   label: 'Pagadas' },
+    { key: 'CANCELADA', label: 'Canceladas' },
+  ]
 
   return (
-    <main className="page">
-      <section className="page-title-section">
-        <h1>Mis órdenes</h1>
-      </section>
+    <main style={{ paddingTop: 'var(--header-height)', minHeight: '100vh', background: '#f1f5f9' }}>
 
-      <section style={{ background: 'var(--gradient-soft)', paddingTop: '3rem', paddingBottom: '4rem' }}>
-        <div className="mx-auto max-w-6xl px-6">
-          <section
-            className="rounded-3xl text-white shadow-lg"
-            style={{ background: 'var(--gradient-brand)', margin: '2rem', padding: '3.5rem 4rem' }}
-          >
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.24em', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem', marginTop: '0' }}>
-              Tus compras
-            </p>
-            <h2 style={{ marginTop: '1.5rem', fontSize: '2.5rem', fontWeight: 700, marginBottom: '1rem' }}>
-              Historial de órdenes
-            </h2>
-            <p style={{ marginTop: '1rem', marginBottom: '3rem', maxWidth: '45rem', fontSize: '0.95rem', color: 'rgba(255, 255, 255, 0.9)' }}>
-              Revisa el estado de tus compras, entra al detalle de cada orden y continúa el pago cuando haga falta.
-            </p>
+      {/* ── Banner ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1c8a86 0%, #2b3a8c 55%, #5a3fa3 100%)',
+        padding: '2.5rem 1.5rem 3rem',
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' as const,
+            letterSpacing: '0.2em', color: 'rgba(255,255,255,0.75)', margin: '0 0 0.5rem' }}>
+            Tus compras
+          </p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#ffffff', margin: '0 0 0.5rem' }}>
+            Historial de órdenes
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.8)', margin: '0 0 2rem', fontSize: '0.9rem', maxWidth: '480px' }}>
+            Revisa el estado de tus compras y continúa el pago cuando haga falta.
+          </p>
 
-            <div className="mt-8 grid gap-8 sm:grid-cols-3" style={{ marginBottom: '1rem' }}>
-              <div style={{
-                borderRadius: '1rem',
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(8px)',
-                padding: '2rem',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            {[
+              { label: 'Total de órdenes', value: String(summary.total) },
+              { label: 'Pendientes',        value: String(summary.pendientes) },
+              { label: 'Valor total',       value: `USD ${summary.valor.toFixed(2)}` },
+            ].map((stat) => (
+              <div key={stat.label} style={{
+                borderRadius: '1rem', background: 'rgba(255,255,255,0.12)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(8px)', padding: '1.25rem 1.5rem',
               }}>
-                <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem' }}>Total de órdenes</p>
-                <p style={{ fontSize: '1.875rem', fontWeight: 700 }}>{summary.totalOrders}</p>
+                <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)', margin: '0 0 0.4rem' }}>
+                  {stat.label}
+                </p>
+                <p style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                  {stat.value}
+                </p>
               </div>
-
-              <div style={{
-                borderRadius: '1rem',
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(8px)',
-                padding: '2rem',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}>
-                <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem' }}>Pendientes</p>
-                <p style={{ fontSize: '1.875rem', fontWeight: 700 }}>{summary.pendingOrders}</p>
-              </div>
-
-              <div style={{
-                borderRadius: '1rem',
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(8px)',
-                padding: '2rem',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}>
-                <p style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.8)', marginBottom: '0.75rem' }}>Valor total</p>
-                <p style={{ fontSize: '1.875rem', fontWeight: 700 }}>USD {summary.totalValue.toFixed(2)}</p>
-              </div>
-            </div>
-          </section>
-
-          <div style={{ marginTop: '4rem', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            {(['TODAS', 'CREADA', 'PAGADA', 'CANCELADA'] as const).map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setActiveFilter(filter)}
-                style={{
-                  borderRadius: '999px',
-                  paddingLeft: '1rem',
-                  paddingRight: '1rem',
-                  paddingTop: '0.5rem',
-                  paddingBottom: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  border: activeFilter === filter ? 'none' : `2px solid var(--color-border)`,
-                  background: activeFilter === filter ? 'var(--color-primary)' : '#ffffff',
-                  color: activeFilter === filter ? '#ffffff' : 'var(--color-text)',
-                  cursor: 'pointer',
-                  transition: 'all 200ms ease'
-                }}
-                onMouseOver={(e) => {
-                  if (activeFilter !== filter) {
-                    (e.target as HTMLButtonElement).style.background = 'var(--color-background)';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (activeFilter !== filter) {
-                    (e.target as HTMLButtonElement).style.background = '#ffffff';
-                  }
-                }}
-              >
-                {filter === 'TODAS' ? 'Todas' : getStatusLabel(filter)}
-              </button>
             ))}
           </div>
+        </div>
+      </div>
 
-          {loading ? (
-            <div style={{
-              marginTop: '1.5rem',
-              borderRadius: '1.5rem',
-              border: '1px solid var(--color-border)',
-              background: '#ffffff',
-              padding: '1.5rem',
-              boxShadow: 'var(--sombra-suave)'
-            }}>
-              <p>Cargando órdenes...</p>
+      {/* ── Contenido ── */}
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem 1.5rem 4rem' }}>
+
+        {/* Filtros */}
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          {filtros.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setActiveFilter(f.key)}
+              style={{
+                borderRadius: '999px', padding: '0.5rem 1.1rem',
+                fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                transition: 'all 200ms', border: 'none',
+                background: activeFilter === f.key
+                  ? 'linear-gradient(135deg, #1c8a86, #2b3a8c)'
+                  : '#ffffff',
+                color: activeFilter === f.key ? '#ffffff' : '#374151',
+                boxShadow: activeFilter === f.key
+                  ? '0 2px 8px rgba(28,138,134,0.3)'
+                  : '0 1px 3px rgba(0,0,0,0.08)',
+              }}
+            >
+              {f.label}
+              {f.key === 'TODAS' && orders.length > 0 && (
+                <span style={{
+                  marginLeft: '0.4rem', background: activeFilter === f.key
+                    ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
+                  color: activeFilter === f.key ? '#ffffff' : '#64748b',
+                  borderRadius: '999px', padding: '0.05rem 0.45rem',
+                  fontSize: '0.7rem', fontWeight: 700,
+                }}>
+                  {orders.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading */}
+        {loading && (
+          <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #e2e8f0',
+            padding: '3rem', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <p style={{ color: '#64748b' }}>Cargando órdenes...</p>
+          </div>
+        )}
+
+        {/* Error */}
+        {!loading && error && (
+          <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #fca5a5',
+            padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <p style={{ color: '#dc2626', fontWeight: 600, margin: '0 0 1rem' }}>{error}</p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <Link href="/login" style={{
+                background: 'var(--color-primary)', color: '#ffffff',
+                borderRadius: '999px', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.875rem',
+              }}>
+                Iniciar sesión
+              </Link>
+              <Link href="/productos" style={{
+                background: '#ffffff', color: '#374151', border: '1px solid #e2e8f0',
+                borderRadius: '999px', padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.875rem',
+              }}>
+                Ver productos
+              </Link>
             </div>
-          ) : error ? (
-            <div style={{
-              marginTop: '1.5rem',
-              borderRadius: '1.5rem',
-              border: '2px solid #ef5350',
-              background: '#ffffff',
-              padding: '1.5rem',
-              boxShadow: 'var(--sombra-suave)'
+          </div>
+        )}
+
+        {/* Sin órdenes */}
+        {!loading && !error && filteredOrders.length === 0 && (
+          <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #e2e8f0',
+            padding: '3rem 2rem', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <p style={{ fontSize: '2.5rem', margin: '0 0 1rem' }}>📭</p>
+            <p style={{ color: '#64748b', margin: '0 0 1.5rem' }}>
+              {orders.length === 0 ? 'Aún no tienes órdenes.' : 'No hay órdenes para ese filtro.'}
+            </p>
+            <Link href="/productos" style={{
+              display: 'inline-block', background: 'linear-gradient(135deg, #1c8a86, #2b3a8c)',
+              color: '#ffffff', borderRadius: '999px', padding: '0.65rem 1.5rem',
+              fontWeight: 700, fontSize: '0.875rem',
             }}>
-              <p style={{ fontWeight: 600, color: '#d32f2f' }}>{error}</p>
-              <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <Link
-                  href="/login"
-                  style={{
-                    borderRadius: '999px',
-                    paddingLeft: '1rem',
-                    paddingRight: '1rem',
-                    paddingTop: '0.5rem',
-                    paddingBottom: '0.5rem',
-                    background: 'var(--color-primary)',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Iniciar sesión
-                </Link>
+              Ir a productos
+            </Link>
+          </div>
+        )}
 
-                <Link
-                  href="/productos"
-                  style={{
-                    borderRadius: '999px',
-                    border: '2px solid var(--color-border)',
-                    paddingLeft: '1rem',
-                    paddingRight: '1rem',
-                    paddingTop: '0.375rem',
-                    paddingBottom: '0.375rem',
-                    background: '#ffffff',
-                    color: 'var(--color-text)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Ver productos
-                </Link>
-              </div>
-            </div>
-          ) : filteredOrders.length === 0 ? (
-            <div style={{
-              marginTop: '1.5rem',
-              borderRadius: '1.5rem',
-              border: '1px solid var(--color-border)',
-              background: '#ffffff',
-              padding: '2rem',
-              boxShadow: 'var(--sombra-suave)',
-              textAlign: 'center'
-            }}>
-              <p style={{ color: '#667780' }}>
-                {orders.length === 0 ? 'Aún no tienes órdenes.' : 'No hay órdenes para ese filtro.'}
-              </p>
+        {/* Lista de órdenes */}
+        {!loading && !error && filteredOrders.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {filteredOrders.map((order) => {
+              const oes = estadoOrdenStyle(order.estado)
+              const pes = order.pago ? estadoPagoStyle(order.pago.estado) : null
 
-              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <Link
-                  href="/productos"
-                  style={{
-                    borderRadius: '999px',
-                    paddingLeft: '1rem',
-                    paddingRight: '1rem',
-                    paddingTop: '0.5rem',
-                    paddingBottom: '0.5rem',
-                    background: 'var(--color-primary)',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Seguir comprando
-                </Link>
-
-                <Link
-                  href="/carrito"
-                  style={{
-                    borderRadius: '999px',
-                    border: '2px solid var(--color-border)',
-                    paddingLeft: '1rem',
-                    paddingRight: '1rem',
-                    paddingTop: '0.375rem',
-                    paddingBottom: '0.375rem',
-                    background: '#ffffff',
-                    color: 'var(--color-text)',
-                    fontWeight: 600,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Ir al carrito
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div style={{ marginTop: '2.5rem', display: 'grid', gap: '1.5rem' }}>
-              {filteredOrders.map((order) => (
-                <article
-                  key={order.id}
-                  style={{
-                    borderRadius: '2rem',
-                    border: '1px solid var(--color-border)',
-                    background: '#ffffff',
-                    padding: '1.5rem',
-                    boxShadow: 'var(--sombra-media)'
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+              return (
+                <article key={order.id} style={{
+                  background: '#ffffff', borderRadius: '1.25rem',
+                  border: '1px solid #e2e8f0', overflow: 'hidden',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                }}>
+                  {/* Header de la card */}
+                  <div style={{
+                    padding: '1.1rem 1.5rem', borderBottom: '1px solid #f8fafc',
+                    background: '#fafafa',
+                    display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem',
+                  }}>
                     <div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
-                        <span style={{
-                          borderRadius: '999px',
-                          paddingLeft: '0.75rem',
-                          paddingRight: '0.75rem',
-                          paddingTop: '0.25rem',
-                          paddingBottom: '0.25rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          ...(order.estado === 'CREADA' && { background: '#fef08a', color: '#854d0e' }),
-                          ...(order.estado === 'PAGADA' && { background: '#dcfce7', color: '#166534' }),
-                          ...(order.estado === 'CANCELADA' && { background: '#fee2e2', color: '#991b1b' })
-                        }}>
-                          {getStatusLabel(order.estado)}
-                        </span>
-
-                        <span style={{
-                          borderRadius: '999px',
-                          paddingLeft: '0.75rem',
-                          paddingRight: '0.75rem',
-                          paddingTop: '0.25rem',
-                          paddingBottom: '0.25rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          background: 'var(--color-surface-soft)',
-                          color: '#667780'
-                        }}>
-                          {order.pago ? getPaymentLabel(order.pago) : 'Sin pago'}
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+                        <Badge text={oes.label} bg={oes.bg} color={oes.color} />
+                        {pes && <Badge text={pes.label} bg={pes.bg} color={pes.color} />}
                       </div>
-
-                      <h2 style={{ marginTop: '0.75rem', fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                        Orden {order.id}
-                      </h2>
-                      <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#667780' }}>
-                        Creada el {new Date(order.creadoEn).toLocaleString()}
+                      <p style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#94a3b8', margin: 0 }}>
+                        {order.id}
                       </p>
                     </div>
-
-                    <div style={{
-                      borderRadius: '1.5rem',
-                      background: 'var(--color-surface-soft)',
-                      paddingLeft: '1rem',
-                      paddingRight: '1rem',
-                      paddingTop: '0.75rem',
-                      paddingBottom: '0.75rem',
-                      border: '1px solid var(--color-border)'
-                    }}>
-                      <p style={{ fontSize: '0.875rem', color: '#667780' }}>Total</p>
-                      <p style={{ marginTop: '0.25rem', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                         {order.moneda} {Number(order.total).toFixed(2)}
                       </p>
-                      <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#667780' }}>
-                        {order.items.length} artículo(s)
+                      <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '0.1rem 0 0' }}>
+                        {new Date(order.creadoEn).toLocaleDateString('es-EC', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit',
+                        })}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          borderRadius: '1rem',
-                          border: '1px solid var(--color-border)',
-                          background: 'var(--color-surface-soft)',
-                          paddingLeft: '1rem',
-                          paddingRight: '1rem',
-                          paddingTop: '1rem',
-                          paddingBottom: '1rem',
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  {/* Items */}
+                  <div style={{ padding: '1rem 1.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {order.items.map((item) => (
+                        <div key={item.id} style={{
+                          display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'center', gap: '1rem',
+                          background: '#f8fafc', borderRadius: '0.75rem',
+                          padding: '0.7rem 1rem', border: '1px solid #f1f5f9',
+                        }}>
                           <div>
-                            <p style={{ fontWeight: 600, color: 'var(--color-text)' }}>{item.tituloSnapshot}</p>
-                            <p style={{ color: '#667780', marginTop: '0.25rem' }}>
+                            <p style={{ fontWeight: 600, color: '#1e293b', margin: '0 0 0.15rem', fontSize: '0.9rem' }}>
+                              {item.tituloSnapshot}
+                            </p>
+                            <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
                               Cantidad: {item.cantidad}
                             </p>
                           </div>
-
-                          <p style={{ fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontWeight: 700, color: '#0f172a', margin: 0, whiteSpace: 'nowrap' as const, fontSize: '0.9rem' }}>
                             {item.monedaSnapshot} {Number(item.precioUnitarioSnapshot).toFixed(2)}
                           </p>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
-                  <div style={{ marginTop: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <Link
-                      href={`/cuenta/ordenes/${order.id}`}
-                      style={{
-                        borderRadius: '999px',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        paddingTop: '0.5rem',
-                        paddingBottom: '0.5rem',
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        background: 'var(--color-primary)',
-                        color: '#ffffff',
-                        boxShadow: '0 2px 8px rgba(43, 58, 140, 0.2)',
-                        cursor: 'pointer',
-                        display: 'inline-block'
-                      }}
-                      onMouseOver={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-primary-700)';
-                        (e.target as HTMLElement).style.boxShadow = '0 4px 12px rgba(43, 58, 140, 0.3)';
-                      }}
-                      onMouseOut={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-primary)';
-                        (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(43, 58, 140, 0.2)';
-                      }}
-                    >
-                      Ver detalle
+                  {/* Footer con acciones */}
+                  <div style={{
+                    padding: '0.9rem 1.5rem', borderTop: '1px solid #f8fafc',
+                    background: '#fafafa', display: 'flex', gap: '0.6rem', flexWrap: 'wrap',
+                  }}>
+                    <Link href={`/cuenta/ordenes/${order.id}`} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                      background: 'linear-gradient(135deg, #1c8a86, #2b3a8c)',
+                      color: '#ffffff', borderRadius: '999px',
+                      padding: '0.5rem 1.1rem', fontWeight: 700, fontSize: '0.82rem',
+                      boxShadow: '0 2px 6px rgba(28,138,134,0.25)',
+                    }}>
+                      Ver detalle →
                     </Link>
 
-                    {order.estado === 'CREADA' ? (
-                      <Link
-                        href={`/pago/${order.id}`}
-                        style={{
-                          borderRadius: '999px',
-                          border: '2px solid var(--color-border)',
-                          paddingLeft: '1rem',
-                          paddingRight: '1rem',
-                          paddingTop: '0.375rem',
-                          paddingBottom: '0.375rem',
-                          fontSize: '0.875rem',
-                          fontWeight: 600,
-                          background: '#ffffff',
-                          color: 'var(--color-text)',
-                          cursor: 'pointer',
-                          display: 'inline-block',
-                          transition: 'all 200ms ease'
-                        }}
-                        onMouseOver={(e) => {
-                          (e.target as HTMLElement).style.background = 'var(--color-background)';
-                          (e.target as HTMLElement).style.borderColor = 'var(--color-secondary)';
-                        }}
-                        onMouseOut={(e) => {
-                          (e.target as HTMLElement).style.background = '#ffffff';
-                          (e.target as HTMLElement).style.borderColor = 'var(--color-border)';
-                        }}
-                      >
-                        Ir a pagar
+                    {order.estado === 'CREADA' && (
+                      <Link href={`/pago/${order.id}`} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                        background: '#ffffff', color: '#374151',
+                        border: '1px solid #e2e8f0', borderRadius: '999px',
+                        padding: '0.5rem 1.1rem', fontWeight: 700, fontSize: '0.82rem',
+                      }}>
+                        💳 Ir a pagar
                       </Link>
-                ) : null}
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-        </div>
-      </section>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </main>
   )
 }

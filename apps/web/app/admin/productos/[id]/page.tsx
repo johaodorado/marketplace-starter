@@ -4,49 +4,56 @@ import Link from 'next/link'
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 
-type Categoria = {
-  id: string
-  nombre: string
-}
-
-type Imagen = {
-  id: string
-  url: string
-}
-
-type Variante = {
-  id: string
-  nombre: string
-  sku: string | null
-  precio: number | null
-  stock: number
-}
-
+type Categoria = { id: string; nombre: string }
+type Imagen = { id: string; url: string; orden: number }
+type Variante = { id: string; nombre: string; sku: string | null; precio: number | null; stock: number }
 type Producto = {
-  id: string
-  titulo: string
-  descripcion: string
-  precioBase: number
-  moneda: string
-  estado: string
-  categoria: Categoria | null
-  imagenes: Imagen[]
-  variantes: Variante[]
+  id: string; titulo: string; descripcion: string
+  precioBase: number; moneda: string; estado: string
+  categoria: Categoria | null; imagenes: Imagen[]; variantes: Variante[]
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', border: '1px solid #e2e8f0', borderRadius: '0.6rem',
+  padding: '0.65rem 0.9rem', fontSize: '0.9rem', background: '#f8fafc',
+  color: '#1e293b', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
+}
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: '0.82rem', fontWeight: 600,
+  color: '#374151', marginBottom: '0.35rem',
+}
+
+function SectionCard({ title, subtitle, children }: {
+  title: string; subtitle?: string; children: React.ReactNode
+}) {
+  return (
+    <div style={{
+      background: '#ffffff', borderRadius: '1.25rem',
+      border: '1px solid #e2e8f0', overflow: 'hidden',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    }}>
+      <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+        <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#374151', margin: 0 }}>{title}</h2>
+        {subtitle && <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0.2rem 0 0' }}>{subtitle}</p>}
+      </div>
+      <div style={{ padding: '1.5rem' }}>{children}</div>
+    </div>
+  )
 }
 
 export default function AdminProductoDetallePage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const productId = useMemo(() => String(params?.id ?? ''), [params])
-const [deletingImageId, setDeletingImageId] = useState('')
+
   const [producto, setProducto] = useState<Producto | null>(null)
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [uploadingImages, setUploadingImages] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // Datos del formulario
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
@@ -54,64 +61,53 @@ const [deletingImageId, setDeletingImageId] = useState('')
   const [moneda, setMoneda] = useState('USD')
   const [estado, setEstado] = useState('BORRADOR')
 
+  // Imágenes
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [deletingImageId, setDeletingImageId] = useState('')
 
-const [variantName, setVariantName] = useState('')
-const [variantSku, setVariantSku] = useState('')
-const [variantPrice, setVariantPrice] = useState('')
-const [variantStock, setVariantStock] = useState('')
-const [savingVariant, setSavingVariant] = useState(false)
+  // Variantes
+  const [variantName, setVariantName] = useState('')
+  const [variantSku, setVariantSku] = useState('')
+  const [variantPrice, setVariantPrice] = useState('')
+  const [variantStock, setVariantStock] = useState('')
+  const [savingVariant, setSavingVariant] = useState(false)
   const [adjustingStockVariantId, setAdjustingStockVariantId] = useState('')
   const [stockAdjustByVariant, setStockAdjustByVariant] = useState<Record<string, string>>({})
 
-
   useEffect(() => {
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url))
-    }
+    return () => { previewUrls.forEach((url) => URL.revokeObjectURL(url)) }
   }, [previewUrls])
 
   async function loadData() {
     try {
       setLoading(true)
       setError('')
-      setSuccess('')
-
       const token = localStorage.getItem('accessToken')
-      if (!token) {
-        throw new Error('Debes iniciar sesión como admin')
-      }
+      if (!token) throw new Error('Debes iniciar sesión como admin')
 
-      const [categoriesRes, productRes] = await Promise.all([
+      const [catRes, prodRes] = await Promise.all([
         fetch('/api/categories'),
         fetch(`/api/admin/products/${productId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ])
 
-      if (!categoriesRes.ok) {
-        throw new Error('No se pudieron cargar las categorías')
-      }
+      if (!catRes.ok) throw new Error('No se pudieron cargar las categorías')
+      if (!prodRes.ok) throw new Error('No se pudo cargar el producto')
 
-      if (!productRes.ok) {
-        throw new Error('No se pudo cargar el producto')
-      }
+      const catData = await catRes.json()
+      const prodData = await prodRes.json()
 
-      const categoriesData = await categoriesRes.json()
-      const productData = await productRes.json()
-
-      setCategorias(Array.isArray(categoriesData) ? categoriesData : [])
-      setProducto(productData)
-
-      setTitulo(productData.titulo ?? '')
-      setDescripcion(productData.descripcion ?? '')
-      setCategoriaId(productData.categoria?.id ?? '')
-      setPrecioBase(String(productData.precioBase ?? ''))
-      setMoneda(productData.moneda ?? 'USD')
-      setEstado(productData.estado ?? 'BORRADOR')
+      setCategorias(Array.isArray(catData) ? catData : [])
+      setProducto(prodData)
+      setTitulo(prodData.titulo ?? '')
+      setDescripcion(prodData.descripcion ?? '')
+      setCategoriaId(prodData.categoria?.id ?? '')
+      setPrecioBase(String(prodData.precioBase ?? ''))
+      setMoneda(prodData.moneda ?? 'USD')
+      setEstado(prodData.estado ?? 'BORRADOR')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error cargando producto')
     } finally {
@@ -119,62 +115,41 @@ const [savingVariant, setSavingVariant] = useState(false)
     }
   }
 
-  useEffect(() => {
-    if (productId) {
-      loadData()
-    }
-  }, [productId])
+  useEffect(() => { if (productId) loadData() }, [productId])
 
   async function handleSave(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-
     try {
       setSaving(true)
       setError('')
       setSuccess('')
-
       const token = localStorage.getItem('accessToken')
-      if (!token) {
-        throw new Error('Debes iniciar sesión como admin')
-      }
+      if (!token) throw new Error('Debes iniciar sesión')
 
-      const updateResponse = await fetch(`/api/admin/products/${productId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          titulo,
-          descripcion,
-          categoriaId: categoriaId || undefined,
-          precioBase: Number(precioBase),
-          moneda,
-        }),
-      })
-
-      if (!updateResponse.ok) {
-        const data = await updateResponse.json().catch(() => null)
-        throw new Error(data?.error?.message || data?.message || 'No se pudo actualizar el producto')
-      }
-
-      const statusResponse = await fetch(
-        `/api/admin/products/${productId}/status`,
-        {
+      const [updateRes, statusRes] = await Promise.all([
+        fetch(`/api/admin/products/${productId}`, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            estado,
+            titulo, descripcion,
+            categoriaId: categoriaId || undefined,
+            precioBase: Number(precioBase), moneda,
           }),
-        },
-      )
+        }),
+        fetch(`/api/admin/products/${productId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ estado }),
+        }),
+      ])
 
-      if (!statusResponse.ok) {
-        const data = await statusResponse.json().catch(() => null)
-        throw new Error(data?.error?.message || data?.message || 'No se pudo actualizar el estado')
+      if (!updateRes.ok) {
+        const d = await updateRes.json().catch(() => null)
+        throw new Error(d?.message || 'No se pudo actualizar el producto')
+      }
+      if (!statusRes.ok) {
+        const d = await statusRes.json().catch(() => null)
+        throw new Error(d?.message || 'No se pudo actualizar el estado')
       }
 
       setSuccess('Producto actualizado correctamente')
@@ -187,35 +162,25 @@ const [savingVariant, setSavingVariant] = useState(false)
   }
 
   async function handleUploadImages() {
+    if (!selectedFiles.length) return
     try {
-      if (!selectedFiles.length) {
-        throw new Error('Selecciona al menos una imagen')
-      }
-
-      const token = localStorage.getItem('accessToken')
-      if (!token) {
-        throw new Error('Debes iniciar sesión como admin')
-      }
-
       setUploadingImages(true)
       setError('')
       setSuccess('')
+      const token = localStorage.getItem('accessToken')
+      if (!token) throw new Error('Debes iniciar sesión')
 
       for (const file of selectedFiles) {
         const formData = new FormData()
         formData.append('file', file)
-
         const res = await fetch(`/api/admin/products/${productId}/images`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         })
-
         if (!res.ok) {
-          const data = await res.json().catch(() => null)
-          throw new Error(data?.error?.message || data?.message || 'No se pudo subir una imagen')
+          const d = await res.json().catch(() => null)
+          throw new Error(d?.message || 'No se pudo subir una imagen')
         }
       }
 
@@ -231,579 +196,486 @@ const [savingVariant, setSavingVariant] = useState(false)
     }
   }
 
+  async function handleDeleteImage(imageId: string) {
+    try {
+      const token = localStorage.getItem('accessToken')
+      if (!token) throw new Error('Debes iniciar sesión')
+      setDeletingImageId(imageId)
+      const res = await fetch(`/api/admin/products/${productId}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => null)
+        throw new Error(d?.message || 'No se pudo eliminar la imagen')
+      }
+      setSuccess('Imagen eliminada')
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error eliminando imagen')
+    } finally {
+      setDeletingImageId('')
+    }
+  }
+
+  async function handleMoveImage(imageId: string, direction: 'up' | 'down') {
+    try {
+      const token = localStorage.getItem('accessToken')
+      if (!token) throw new Error('Debes iniciar sesión')
+      await fetch(`/api/admin/products/${productId}/images/${imageId}/${direction === 'up' ? 'move-up' : 'move-down'}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error moviendo imagen')
+    }
+  }
+
+  async function handleSetPrimaryImage(imageId: string) {
+    try {
+      const token = localStorage.getItem('accessToken')
+      if (!token) throw new Error('Debes iniciar sesión')
+      await fetch(`/api/admin/products/${productId}/images/${imageId}/primary`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setSuccess('Imagen principal actualizada')
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error actualizando imagen principal')
+    }
+  }
+
+  async function handleCreateVariant(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    try {
+      setSavingVariant(true)
+      setError('')
+      setSuccess('')
+      const token = localStorage.getItem('accessToken')
+      if (!token) throw new Error('Debes iniciar sesión')
+
+      const varRes = await fetch(`/api/admin/products/${productId}/variants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nombre: variantName.trim(),
+          sku: variantSku.trim() || undefined,
+          precio: variantPrice ? Number(variantPrice) : undefined,
+        }),
+      })
+      if (!varRes.ok) {
+        const d = await varRes.json().catch(() => null)
+        throw new Error(d?.message || 'No se pudo crear la variante')
+      }
+      const variant = await varRes.json()
+
+      if (Number(variantStock || 0) > 0) {
+        const stockRes = await fetch(`/api/admin/products/${productId}/variants/${variant.id}/stock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ cantidad: Number(variantStock), motivo: 'Carga inicial desde admin' }),
+        })
+        if (!stockRes.ok) {
+          const d = await stockRes.json().catch(() => null)
+          throw new Error(d?.message || 'No se pudo cargar el stock')
+        }
+      }
+
+      setVariantName(''); setVariantSku(''); setVariantPrice(''); setVariantStock('')
+      setSuccess('Variante creada correctamente')
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error creando variante')
+    } finally {
+      setSavingVariant(false)
+    }
+  }
+
+  async function handleAdjustStock(variantId: string) {
+    try {
+      const token = localStorage.getItem('accessToken')
+      if (!token) throw new Error('Debes iniciar sesión')
+      const cantidad = Number(stockAdjustByVariant[variantId] || 0)
+      if (!Number.isFinite(cantidad) || cantidad === 0) throw new Error('Ingresa una cantidad distinta de 0')
+      setAdjustingStockVariantId(variantId)
+      const res = await fetch(`/api/admin/products/${productId}/variants/${variantId}/stock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cantidad, motivo: 'Ajuste manual desde panel admin' }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => null)
+        throw new Error(d?.message || 'No se pudo ajustar el stock')
+      }
+      setStockAdjustByVariant((prev) => ({ ...prev, [variantId]: '' }))
+      setSuccess('Stock ajustado correctamente')
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error ajustando stock')
+    } finally {
+      setAdjustingStockVariantId('')
+    }
+  }
+
+  const estadoColor: Record<string, { bg: string; color: string }> = {
+    ACTIVO:    { bg: '#dcfce7', color: '#166534' },
+    BORRADOR:  { bg: '#f1f5f9', color: '#475569' },
+    PAUSADO:   { bg: '#fef9c3', color: '#854d0e' },
+    ARCHIVADO: { bg: '#fee2e2', color: '#991b1b' },
+  }
+
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-6 py-12">
-        <p>Cargando producto...</p>
+      <main className="page">
+        <section className="page-title-section"><h1>Editar producto</h1></section>
+        <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <p style={{ color: '#64748b' }}>Cargando producto...</p>
+        </section>
       </main>
     )
   }
 
   if (!producto) {
     return (
-      <main className="mx-auto max-w-6xl px-6 py-12">
-        <p className="text-red-600">No se encontró el producto.</p>
-        <Link href="/admin/productos" className="mt-4 inline-block text-sm text-slate-700 underline">
-          Volver a productos
-        </Link>
+      <main className="page">
+        <section className="page-title-section"><h1>Editar producto</h1></section>
+        <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <div style={{ background: '#fee2e2', borderRadius: '1rem', padding: '1rem 1.5rem', color: '#991b1b' }}>
+            {error || 'No se encontró el producto.'}
+          </div>
+          <Link href="/admin/productos" style={{ display: 'inline-block', marginTop: '1rem', color: '#64748b', fontSize: '0.875rem' }}>
+            ← Volver a productos
+          </Link>
+        </section>
       </main>
     )
   }
 
+  const ec = estadoColor[estado] ?? estadoColor.BORRADOR
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <Link href="/admin/productos" className="text-sm text-slate-600 underline">
-            Volver a productos
-          </Link>
-          <h1 className="mt-2 text-3xl font-bold">Editar producto</h1>
-          <p className="mt-1 text-sm text-slate-500">{producto.titulo}</p>
-        </div>
+    <main className="page">
+      <section className="page-title-section">
+        <h1>Editar producto</h1>
+      </section>
 
-        <button
-          type="button"
-          onClick={() => router.refresh()}
-          className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
-        >
-          Refrescar
-        </button>
-      </div>
+      <section style={{ background: 'var(--gradient-soft)', padding: '2.5rem 1.5rem 4rem' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Datos del producto</h2>
-
-          <form onSubmit={handleSave} className="mt-5 space-y-4">
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
             <div>
-              <label className="mb-2 block text-sm font-medium">Título</label>
-              <input
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
-              />
+              <Link href="/admin/productos" style={{ fontSize: '0.85rem', color: '#64748b', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                ← Volver a productos
+              </Link>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                {producto.titulo}
+              </h1>
+              <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontFamily: 'monospace', marginTop: '0.25rem' }}>
+                {productId}
+              </p>
             </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">Descripción</label>
-              <textarea
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                className="min-h-32 w-full rounded-xl border border-slate-300 px-4 py-3"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">Categoría</label>
-              <select
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3"
-              >
-                <option value="">Sin categoría</option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className="mb-2 block text-sm font-medium">Precio base</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={precioBase}
-                  onChange={(e) => setPrecioBase(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">Moneda</label>
-                <input
-                  value={moneda}
-                  onChange={(e) => setMoneda(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">Estado</label>
-                <select
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
-                >
-                  <option value="BORRADOR">BORRADOR</option>
-                  <option value="ACTIVO">ACTIVO</option>
-                  <option value="INACTIVO">INACTIVO</option>
-                </select>
-              </div>
-            </div>
-
-            {error ? <p className="text-sm text-red-600">{error}</p> : null}
-            {success ? <p className="text-sm text-green-600">{success}</p> : null}
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-white disabled:opacity-60"
-            >
-              {saving ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-          </form>
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Imágenes</h2>
-
-          <div className="mt-5">
-            <label className="mb-2 block text-sm font-medium">Subir varias imágenes</label>
-            <input
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? [])
-                previewUrls.forEach((url) => URL.revokeObjectURL(url))
-                setSelectedFiles(files)
-                setPreviewUrls(files.map((file) => URL.createObjectURL(file)))
-              }}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3"
-            />
-
-            {previewUrls.length > 0 ? (
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {previewUrls.map((url, index) => (
-                  <div
-                    key={`${url}-${index}`}
-                    className="overflow-hidden rounded-xl border border-slate-200"
-                  >
-                    <img
-                      src={url}
-                      alt={`Preview ${index + 1}`}
-                      className="h-32 w-full object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={handleUploadImages}
-              disabled={uploadingImages || selectedFiles.length === 0}
-              className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-white disabled:opacity-60"
-            >
-              {uploadingImages ? 'Subiendo...' : 'Subir imágenes'}
-            </button>
+            <span style={{
+              borderRadius: '999px', padding: '0.3rem 1rem',
+              fontSize: '0.78rem', fontWeight: 700,
+              textTransform: 'uppercase' as const,
+              background: ec.bg, color: ec.color,
+            }}>
+              {estado}
+            </span>
           </div>
 
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold">Imágenes actuales</h3>
+          {/* Alertas globales */}
+          {error && (
+            <div style={{ background: '#fee2e2', borderRadius: '0.75rem', border: '1px solid #fca5a5',
+              padding: '0.75rem 1rem', color: '#991b1b', fontSize: '0.875rem',
+              marginBottom: '1.5rem', fontWeight: 500 }}>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div style={{ background: '#dcfce7', borderRadius: '0.75rem', border: '1px solid #86efac',
+              padding: '0.75rem 1rem', color: '#166534', fontSize: '0.875rem',
+              marginBottom: '1.5rem', fontWeight: 600 }}>
+              ✓ {success}
+            </div>
+          )}
 
-            {producto.imagenes.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">Este producto no tiene imágenes.</p>
-            ) : (
-              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-               {producto.imagenes.map((imagen, index) => (
-  
+          {/* Layout principal */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
 
-
-
-<div
-  key={imagen.id}
-  className="overflow-hidden rounded-xl border border-slate-200 bg-white"
->
-  <img
-    src={imagen.url}
-    alt={`Imagen ${index + 1}`}
-    className="h-36 w-full object-cover"
-  />
-
-  <div className="space-y-2 p-3">
-    <p className="text-xs text-slate-500">
-      {index === 0 ? 'Imagen principal' : `Imagen ${index + 1}`}
-    </p>
-
-    <button
-      type="button"
-      onClick={() => handleSetPrimaryImage(imagen.id)}
-      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-    >
-      Poner principal
-    </button>
-
-    <div className="grid grid-cols-2 gap-2">
-      <button
-        type="button"
-        onClick={() => handleMoveImage(imagen.id, 'up')}
-        className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-      >
-        Subir
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleMoveImage(imagen.id, 'down')}
-        className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-      >
-        Bajar
-      </button>
-    </div>
-
-    <button
-      type="button"
-      onClick={() => handleDeleteImage(imagen.id)}
-      disabled={deletingImageId === imagen.id}
-      className="w-full rounded-lg bg-red-600 px-3 py-2 text-sm text-white disabled:opacity-60"
-    >
-      {deletingImageId === imagen.id ? 'Eliminando...' : 'Eliminar'}
-    </button>
-  </div>
-</div>
-
-
-))}
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-  <h2 className="text-xl font-semibold">Variantes</h2>
-
-  <form onSubmit={handleCreateVariant} className="mt-5 rounded-xl border border-slate-200 p-4">
-    <h3 className="font-semibold">Nueva variante</h3>
-
-    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div>
-        <label className="mb-2 block text-sm font-medium">Nombre</label>
-        <input
-          value={variantName}
-          onChange={(e) => setVariantName(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3"
-          placeholder="Ej. Color negro"
-        />
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium">SKU</label>
-        <input
-          value={variantSku}
-          onChange={(e) => setVariantSku(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3"
-          placeholder="SKU-001"
-        />
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium">Precio</label>
-        <input
-          type="number"
-          step="0.01"
-          value={variantPrice}
-          onChange={(e) => setVariantPrice(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3"
-        />
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium">Stock inicial</label>
-        <input
-          type="number"
-          value={variantStock}
-          onChange={(e) => setVariantStock(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 px-4 py-3"
-        />
-      </div>
-    </div>
-
-    <button
-      type="submit"
-      disabled={savingVariant}
-      className="mt-4 rounded-xl bg-slate-900 px-4 py-3 text-white disabled:opacity-60"
-    >
-      {savingVariant ? 'Guardando...' : 'Crear variante'}
-    </button>
-  </form>
-
-  {producto.variantes.length === 0 ? (
-    <p className="mt-4 text-slate-500">Este producto no tiene variantes.</p>
-  ) : (
-    <div className="mt-4 overflow-x-auto">
-      <table className="min-w-full border-collapse">
-        <thead>
-          <tr className="border-b border-slate-200 text-left text-sm text-slate-600">
-            <th className="py-3 pr-4">Nombre</th>
-            <th className="py-3 pr-4">SKU</th>
-            <th className="py-3 pr-4">Precio</th>
-            <th className="py-3 pr-4">Stock</th>
-            <th className="py-3 pr-4">Ajustar</th>
-          </tr>
-        </thead>
-        <tbody>
-          {producto.variantes.map((variante) => (
-            <tr key={variante.id} className="border-b border-slate-100 text-sm">
-              <td className="py-3 pr-4">{variante.nombre}</td>
-              <td className="py-3 pr-4">{variante.sku || 'Sin SKU'}</td>
-              <td className="py-3 pr-4">
-                {variante.precio != null ? Number(variante.precio).toFixed(2) : 'Sin precio'}
-              </td>
-              <td className="py-3 pr-4">{variante.stock}</td>
-              <td className="py-3 pr-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={stockAdjustByVariant[variante.id] ?? ''}
-                    onChange={(e) =>
-                      setStockAdjustByVariant((prev) => ({
-                        ...prev,
-                        [variante.id]: e.target.value,
-                      }))
-                    }
-                    className="w-24 rounded-lg border border-slate-300 px-2 py-1"
-                    placeholder="+/-"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAdjustExistingStock(variante.id)}
-                    disabled={adjustingStockVariantId === variante.id}
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs disabled:opacity-60"
-                  >
-                    {adjustingStockVariantId === variante.id ? 'Aplicando...' : 'Aplicar'}
-                  </button>
+            {/* ── Datos generales ── */}
+            <SectionCard title="Datos del producto">
+              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Título *</label>
+                  <input value={titulo} onChange={(e) => setTitulo(e.target.value)} style={inputStyle} required />
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</section>
+                <div>
+                  <label style={labelStyle}>Descripción *</label>
+                  <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+                    style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} required />
+                </div>
+                <div>
+                  <label style={labelStyle}>Categoría</label>
+                  <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} style={inputStyle}>
+                    <option value="">Sin categoría</option>
+                    {categorias.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Precio base</label>
+                    <input type="number" step="0.01" value={precioBase}
+                      onChange={(e) => setPrecioBase(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Moneda</label>
+                    <input value={moneda} onChange={(e) => setMoneda(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Estado</label>
+                    <select value={estado} onChange={(e) => setEstado(e.target.value)} style={inputStyle}>
+                      <option value="BORRADOR">BORRADOR</option>
+                      <option value="ACTIVO">ACTIVO</option>
+                      <option value="PAUSADO">PAUSADO</option>
+                      <option value="ARCHIVADO">ARCHIVADO</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" disabled={saving} style={{
+                  background: saving ? '#94a3b8' : 'linear-gradient(135deg, #1c8a86, #2b3a8c)',
+                  color: '#ffffff', border: 'none', borderRadius: '0.75rem',
+                  padding: '0.8rem', fontWeight: 700, fontSize: '0.9rem',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                }}>
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </form>
+            </SectionCard>
+
+            {/* ── Imágenes ── */}
+            <SectionCard title="Imágenes" subtitle={`${producto.imagenes.length} imagen${producto.imagenes.length !== 1 ? 'es' : ''}`}>
+              {/* Subir nuevas */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={labelStyle}>Subir imágenes</label>
+                <input type="file" multiple accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? [])
+                    previewUrls.forEach((u) => URL.revokeObjectURL(u))
+                    setSelectedFiles(files)
+                    setPreviewUrls(files.map((f) => URL.createObjectURL(f)))
+                  }}
+                  style={{ ...inputStyle, padding: '0.45rem 0.9rem' }}
+                />
+                {previewUrls.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    {previewUrls.map((url, i) => (
+                      <img key={`${url}-${i}`} src={url} alt={`Preview ${i + 1}`}
+                        style={{ width: '64px', height: '64px', objectFit: 'cover',
+                          borderRadius: '0.5rem', border: '1px solid #e2e8f0' }} />
+                    ))}
+                  </div>
+                )}
+                <button type="button" onClick={handleUploadImages}
+                  disabled={uploadingImages || selectedFiles.length === 0}
+                  style={{
+                    marginTop: '0.75rem', width: '100%',
+                    background: uploadingImages || selectedFiles.length === 0 ? '#94a3b8' : '#1c8a86',
+                    color: '#fff', border: 'none', borderRadius: '0.6rem',
+                    padding: '0.65rem', fontWeight: 700, fontSize: '0.875rem',
+                    cursor: uploadingImages || selectedFiles.length === 0 ? 'not-allowed' : 'pointer',
+                  }}>
+                  {uploadingImages ? 'Subiendo...' : 'Subir imágenes'}
+                </button>
+              </div>
+
+              {/* Imágenes actuales */}
+              {producto.imagenes.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>
+                  Sin imágenes todavía.
+                </p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                  {producto.imagenes.map((img, index) => (
+                    <div key={img.id} style={{
+                      borderRadius: '0.75rem', border: `2px solid ${index === 0 ? '#1c8a86' : '#e2e8f0'}`,
+                      overflow: 'hidden', background: '#f8fafc',
+                    }}>
+                      <div style={{ position: 'relative' }}>
+                        <img src={img.url} alt={`Imagen ${index + 1}`}
+                          style={{ width: '100%', height: '100px', objectFit: 'cover', display: 'block' }} />
+                        {index === 0 && (
+                          <span style={{
+                            position: 'absolute', top: '0.35rem', left: '0.35rem',
+                            background: '#1c8a86', color: '#fff', borderRadius: '999px',
+                            padding: '0.15rem 0.5rem', fontSize: '0.65rem', fontWeight: 700,
+                          }}>
+                            Principal
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <button type="button" onClick={() => handleSetPrimaryImage(img.id)}
+                          style={{ ...btnSmall, background: '#f0fdf4', color: '#16a34a', border: '1px solid #86efac' }}>
+                          ★ Principal
+                        </button>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                          <button type="button" onClick={() => handleMoveImage(img.id, 'up')}
+                            style={{ ...btnSmall, background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}>
+                            ↑
+                          </button>
+                          <button type="button" onClick={() => handleMoveImage(img.id, 'down')}
+                            style={{ ...btnSmall, background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}>
+                            ↓
+                          </button>
+                        </div>
+                        <button type="button" onClick={() => handleDeleteImage(img.id)}
+                          disabled={deletingImageId === img.id}
+                          style={{ ...btnSmall, background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5',
+                            opacity: deletingImageId === img.id ? 0.6 : 1 }}>
+                          {deletingImageId === img.id ? '...' : 'Eliminar'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </SectionCard>
+          </div>
+
+          {/* ── Variantes ── */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <SectionCard title="Variantes" subtitle="Gestiona presentaciones, talles, colores, etc.">
+
+              {/* Formulario nueva variante */}
+              <form onSubmit={handleCreateVariant} style={{
+                background: '#f8fafc', borderRadius: '0.75rem',
+                border: '1px solid #e2e8f0', padding: '1.25rem',
+                marginBottom: '1.5rem',
+              }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#374151', margin: '0 0 1rem' }}>
+                  Nueva variante
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Nombre *</label>
+                    <input value={variantName} onChange={(e) => setVariantName(e.target.value)}
+                      style={inputStyle} placeholder="Ej. 100 gr" required />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>SKU</label>
+                    <input value={variantSku} onChange={(e) => setVariantSku(e.target.value)}
+                      style={inputStyle} placeholder="SKU-001" />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Precio</label>
+                    <input type="number" step="0.01" value={variantPrice}
+                      onChange={(e) => setVariantPrice(e.target.value)} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Stock inicial</label>
+                    <input type="number" value={variantStock}
+                      onChange={(e) => setVariantStock(e.target.value)} style={inputStyle} />
+                  </div>
+                </div>
+                <button type="submit" disabled={savingVariant} style={{
+                  marginTop: '1rem',
+                  background: savingVariant ? '#94a3b8' : '#2b3a8c',
+                  color: '#fff', border: 'none', borderRadius: '0.6rem',
+                  padding: '0.65rem 1.5rem', fontWeight: 700, fontSize: '0.875rem',
+                  cursor: savingVariant ? 'not-allowed' : 'pointer',
+                }}>
+                  {savingVariant ? 'Guardando...' : '+ Crear variante'}
+                </button>
+              </form>
+
+              {/* Tabla variantes */}
+              {producto.variantes.length === 0 ? (
+                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1.5rem', fontSize: '0.875rem' }}>
+                  Este producto no tiene variantes todavía.
+                </p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
+                        {['Nombre', 'SKU', 'Precio', 'Stock', 'Ajustar stock'].map((h) => (
+                          <th key={h} style={{ textAlign: 'left', padding: '0.75rem 0.5rem',
+                            fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8',
+                            textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {producto.variantes.map((v) => (
+                        <tr key={v.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                          <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: '#1e293b' }}>
+                            {v.nombre}
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem', color: '#64748b', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                            {v.sku || '—'}
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem', color: '#1e293b', fontWeight: 600 }}>
+                            {v.precio != null ? `USD ${Number(v.precio).toFixed(2)}` : '—'}
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem' }}>
+                            <span style={{
+                              background: v.stock > 10 ? '#dcfce7' : v.stock > 0 ? '#fef9c3' : '#fee2e2',
+                              color: v.stock > 10 ? '#166534' : v.stock > 0 ? '#854d0e' : '#991b1b',
+                              borderRadius: '999px', padding: '0.2rem 0.65rem',
+                              fontSize: '0.8rem', fontWeight: 700,
+                            }}>
+                              {v.stock}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem 0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <input
+                                type="number"
+                                value={stockAdjustByVariant[v.id] ?? ''}
+                                onChange={(e) => setStockAdjustByVariant((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                                placeholder="+/-"
+                                style={{ ...inputStyle, width: '80px', padding: '0.45rem 0.6rem', fontSize: '0.85rem' }}
+                              />
+                              <button type="button" onClick={() => handleAdjustStock(v.id)}
+                                disabled={adjustingStockVariantId === v.id}
+                                style={{
+                                  background: '#2b3a8c', color: '#fff', border: 'none',
+                                  borderRadius: '0.5rem', padding: '0.45rem 0.85rem',
+                                  fontSize: '0.8rem', fontWeight: 700,
+                                  cursor: adjustingStockVariantId === v.id ? 'not-allowed' : 'pointer',
+                                  opacity: adjustingStockVariantId === v.id ? 0.6 : 1,
+                                  whiteSpace: 'nowrap' as const,
+                                }}>
+                                {adjustingStockVariantId === v.id ? '...' : 'Aplicar'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </SectionCard>
+          </div>
+
+        </div>
+      </section>
     </main>
   )
-
-async function handleCreateVariant(e: FormEvent<HTMLFormElement>) {
-  e.preventDefault()
-
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
-    }
-
-    setSavingVariant(true)
-    setError('')
-    setSuccess('')
-
-    const variantRes = await fetch(
-      `/api/admin/products/${productId}/variants`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          nombre: variantName.trim(),
-          sku: variantSku.trim() || undefined,
-          precio: variantPrice ? Number(variantPrice) : undefined,
-        }),
-      },
-    )
-
-    if (!variantRes.ok) {
-      const data = await variantRes.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo crear la variante')
-    }
-
-    const variant = await variantRes.json()
-
-    if (Number(variantStock || 0) > 0) {
-      const stockRes = await fetch(
-        `/api/admin/products/${productId}/variants/${variant.id}/stock`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            cantidad: Number(variantStock),
-            motivo: 'Carga inicial desde edición admin',
-          }),
-        },
-      )
-
-      if (!stockRes.ok) {
-        const data = await stockRes.json().catch(() => null)
-        throw new Error(data?.error?.message || data?.message || 'No se pudo cargar el stock')
-      }
-    }
-
-    setVariantName('')
-    setVariantSku('')
-    setVariantPrice('')
-    setVariantStock('')
-    setSuccess('Variante creada correctamente')
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error creando variante')
-  } finally {
-    setSavingVariant(false)
-  }
 }
 
-async function handleDeleteImage(imageId: string) {
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
-    }
-
-    setDeletingImageId(imageId)
-    setError('')
-    setSuccess('')
-
-    const res = await fetch(
-      `/api/admin/products/${productId}/images/${imageId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo eliminar la imagen')
-    }
-
-    setSuccess('Imagen eliminada correctamente')
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error eliminando imagen')
-  } finally {
-    setDeletingImageId('')
-  }
-}
-
-
-async function handleMoveImage(imageId: string, direction: 'up' | 'down') {
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
-    }
-
-    setError('')
-    setSuccess('')
-
-    const res = await fetch(
-      `/api/admin/products/${productId}/images/${imageId}/${direction === 'up' ? 'move-up' : 'move-down'}`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo mover la imagen')
-    }
-
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error moviendo imagen')
-  }
-}
-
-async function handleSetPrimaryImage(imageId: string) {
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
-    }
-
-    setError('')
-    setSuccess('')
-
-    const res = await fetch(
-      `/api/admin/products/${productId}/images/${imageId}/primary`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    )
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo definir imagen principal')
-    }
-
-    setSuccess('Imagen principal actualizada')
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error actualizando imagen principal')
-  }
-}
-
-async function handleAdjustExistingStock(variantId: string) {
-  try {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('Debes iniciar sesión como admin')
-    }
-
-    const cantidad = Number(stockAdjustByVariant[variantId] || 0)
-    if (!Number.isFinite(cantidad) || cantidad === 0) {
-      throw new Error('Ingresa una cantidad distinta de 0')
-    }
-
-    setAdjustingStockVariantId(variantId)
-    setError('')
-    setSuccess('')
-
-    const res = await fetch(
-      `/api/admin/products/${productId}/variants/${variantId}/stock`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          cantidad,
-          motivo: 'Ajuste manual desde panel admin',
-        }),
-      },
-    )
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error?.message || data?.message || 'No se pudo ajustar el stock')
-    }
-
-    setStockAdjustByVariant((prev) => ({ ...prev, [variantId]: '' }))
-    setSuccess('Stock ajustado correctamente')
-    await loadData()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Error ajustando stock')
-  } finally {
-    setAdjustingStockVariantId('')
-  }
-}
-
-
+const btnSmall: React.CSSProperties = {
+  width: '100%', border: 'none', borderRadius: '0.4rem',
+  padding: '0.3rem 0.4rem', fontSize: '0.72rem', fontWeight: 700,
+  cursor: 'pointer', textAlign: 'center' as const,
 }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 const AUTH_CHANGED_EVENT = 'auth-changed'
 
@@ -14,7 +15,37 @@ type Usuario = {
   rol: string
 }
 
+function DataCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{
+      borderRadius: '0.85rem', border: '1px solid #e2e8f0',
+      background: '#f8fafc', padding: '0.9rem 1.1rem',
+    }}>
+      <p style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' as const,
+        letterSpacing: '0.1em', color: '#94a3b8', margin: '0 0 0.3rem' }}>
+        {label}
+      </p>
+      <p style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', margin: 0, wordBreak: 'break-all' as const }}>
+        {value || 'No registrado'}
+      </p>
+    </div>
+  )
+}
+
+const adminLinks = [
+  { href: '/admin/pagos',     label: 'Pagos',     icon: '💳', desc: 'Revisar y aprobar pagos' },
+  { href: '/admin/ordenes',   label: 'Órdenes',   icon: '📦', desc: 'Ver todas las órdenes' },
+  { href: '/admin/productos', label: 'Productos', icon: '🛍️', desc: 'Gestionar catálogo' },
+]
+
+const quickLinks = [
+  { href: '/cuenta/ordenes', label: 'Mis órdenes',   icon: '📋', primary: true },
+  { href: '/carrito',        label: 'Mi carrito',    icon: '🛒', primary: false },
+  { href: '/productos',      label: 'Ver productos', icon: '🔍', primary: false },
+]
+
 export default function CuentaPage() {
+  const router = useRouter()
   const [user, setUser] = useState<Usuario | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -25,26 +56,10 @@ export default function CuentaPage() {
         setLoading(true)
         setError('')
         const token = localStorage.getItem('accessToken')
-
-        if (!token) {
-          setUser(null)
-          setError('No has iniciado sesión')
-          setLoading(false)
-          return
-        }
-
-        const response = await fetch('/api/users/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error('No se pudo cargar tu perfil')
-        }
-
-        const data = await response.json()
-        setUser(data)
+        if (!token) { setUser(null); setError('No has iniciado sesión'); return }
+        const res = await fetch('/api/users/me', { headers: { Authorization: `Bearer ${token}` } })
+        if (!res.ok) throw new Error('No se pudo cargar tu perfil')
+        setUser(await res.json())
       } catch (err) {
         setUser(null)
         setError(err instanceof Error ? err.message : 'Error al cargar perfil')
@@ -52,22 +67,11 @@ export default function CuentaPage() {
         setLoading(false)
       }
     }
-
     void loadProfile()
-
-    const onAuthChanged = () => {
-      void loadProfile()
-    }
-
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === 'accessToken') {
-        void loadProfile()
-      }
-    }
-
+    const onAuthChanged = () => void loadProfile()
+    const onStorage = (e: StorageEvent) => { if (e.key === 'accessToken') void loadProfile() }
     window.addEventListener(AUTH_CHANGED_EVENT, onAuthChanged)
     window.addEventListener('storage', onStorage)
-
     return () => {
       window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChanged)
       window.removeEventListener('storage', onStorage)
@@ -78,394 +82,234 @@ export default function CuentaPage() {
     localStorage.removeItem('accessToken')
     window.dispatchEvent(new Event(AUTH_CHANGED_EVENT))
     setUser(null)
+    router.push('/')
   }
 
   return (
-    <main className="page">
-      <section className="page-title-section">
-        <h1>Mi cuenta</h1>
-      </section>
+    <main style={{ paddingTop: 'var(--header-height)', minHeight: '100vh', background: 'var(--gradient-soft)' }}>
 
-      <section style={{ background: 'var(--gradient-soft)', paddingTop: '2rem', paddingBottom: '3.5rem' }}>
-        <div className="mx-auto max-w-6xl px-6">
+      {/* Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1c8a86 0%, #2b3a8c 60%, #5a3fa3 100%)',
+        padding: '1.75rem 1.5rem',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
+          borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
+
+        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {loading ? (
-            <div style={{
-              borderRadius: '1.5rem',
-              border: '1px solid var(--color-border)',
-              background: '#ffffff',
-              padding: '1.5rem',
-              boxShadow: 'var(--sombra-suave)'
-            }}>
-              <p>Cargando perfil...</p>
-            </div>
-          ) : error ? (
-            <div style={{
-              borderRadius: '1.5rem',
-              border: '2px solid #ef5350',
-              background: '#ffffff',
-              padding: '1.5rem',
-              boxShadow: 'var(--sombra-suave)'
-            }}>
-              <p style={{ color: '#d32f2f', fontWeight: 500 }}>{error}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
+              <div>
+                <div style={{ width: '140px', height: '12px', borderRadius: '999px', background: 'rgba(255,255,255,0.2)', marginBottom: '0.4rem' }} />
+                <div style={{ width: '90px', height: '10px', borderRadius: '999px', background: 'rgba(255,255,255,0.12)' }} />
+              </div>
             </div>
           ) : user ? (
-            <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-              <section style={{
-                borderRadius: '2rem',
-                border: '1px solid var(--color-border)',
-                background: '#ffffff',
-                padding: '2rem',
-                boxShadow: 'var(--sombra-media)'
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem', flexWrap: 'wrap' }}>
+              <div style={{
+                width: '52px', height: '52px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', flexShrink: 0,
               }}>
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
-                  <div>
-                    <div style={{
-                      display: 'inline-flex',
-                      borderRadius: '999px',
-                      paddingLeft: '0.75rem',
-                      paddingRight: '0.75rem',
-                      paddingTop: '0.35rem',
-                      paddingBottom: '0.35rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                      background: 'var(--gradient-brand)',
-                      marginBottom: '0.75rem'
-                    }}>
-                      Perfil
-                    </div>
-                    <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--color-text)', marginTop: '0.5rem' }}>
-                      Datos personales
-                    </h2>
-                    <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: '#627a84', maxWidth: '90%' }}>
-                      Información principal de tu cuenta.
-                    </p>
-                  </div>
-
+                {(user.nombre?.[0] ?? user.email[0]).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+                  <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                    {user.nombre ? `${user.nombre} ${user.apellido ?? ''}`.trim() : 'Mi cuenta'}
+                  </h1>
                   <span style={{
-                    borderRadius: '999px',
-                    paddingLeft: '0.75rem',
-                    paddingRight: '0.75rem',
-                    paddingTop: '0.35rem',
-                    paddingBottom: '0.35rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: '#ffffff',
-                    background: 'var(--color-primary)'
+                    background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)',
+                    color: '#ffffff', borderRadius: '999px', padding: '0.15rem 0.6rem',
+                    fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em',
+                    textTransform: 'uppercase' as const,
                   }}>
                     {user.rol}
                   </span>
                 </div>
+                <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: '0.85rem' }}>
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>Mi cuenta</h1>
+          )}
+        </div>
+      </div>
 
-                <div className="grid gap-5 sm:grid-cols-2 mt-6">
-                  <div style={{
-                    borderRadius: '1rem',
-                    border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface-soft)',
-                    padding: '1.1rem',
-                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)'
-                  }}>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780' }}>
-                      Nombre
-                    </p>
-                    <p style={{ marginTop: '0.75rem', fontSize: '1.0625rem', fontWeight: 600, color: 'var(--color-text)' }}>
-                      {user.nombre ?? 'No registrado'}
-                    </p>
-                  </div>
+      {/* Contenido */}
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.75rem 1.5rem 4rem' }}>
 
-                  <div style={{
-                    borderRadius: '1rem',
-                    border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface-soft)',
-                    padding: '1.1rem',
-                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)'
-                  }}>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780' }}>
-                      Apellido
-                    </p>
-                    <p style={{ marginTop: '0.75rem', fontSize: '1.0625rem', fontWeight: 600, color: 'var(--color-text)' }}>
-                      {user.apellido ?? 'No registrado'}
-                    </p>
-                  </div>
+        {/* Error */}
+        {!loading && error && (
+          <div style={{
+            background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #fca5a5',
+            padding: '1.5rem', marginBottom: '1.5rem',
+          }}>
+            <p style={{ color: '#dc2626', fontWeight: 600, margin: '0 0 1rem' }}>{error}</p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <Link href="/login" style={{
+                background: 'var(--color-primary)', color: '#ffffff',
+                borderRadius: '999px', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.875rem',
+              }}>
+                Iniciar sesión
+              </Link>
+              <Link href="/registro" style={{
+                background: '#ffffff', color: 'var(--color-text)', border: '1px solid #e2e8f0',
+                borderRadius: '999px', padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.875rem',
+              }}>
+                Crear cuenta
+              </Link>
+            </div>
+          </div>
+        )}
 
-                  <div style={{
-                    borderRadius: '1rem',
-                    border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface-soft)',
-                    padding: '1.1rem',
-                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)'
-                  }}>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780' }}>
-                      Correo
-                    </p>
-                    <p style={{ marginTop: '0.75rem', fontSize: '1.0625rem', fontWeight: 600, color: 'var(--color-text)', wordBreak: 'break-all' }}>
-                      {user.email}
-                    </p>
-                  </div>
+        {user && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 270px', gap: '1.25rem', alignItems: 'start' }}>
 
-                  <div style={{
-                    borderRadius: '1rem',
-                    border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface-soft)',
-                    padding: '1.1rem',
-                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)'
-                  }}>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#667780' }}>
-                      Teléfono
-                    </p>
-                    <p style={{ marginTop: '0.75rem', fontSize: '1.0625rem', fontWeight: 600, color: 'var(--color-text)' }}>
-                      {user.telefono ?? 'No registrado'}
-                    </p>
-                  </div>
+            {/* Izquierda */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              {/* Datos personales */}
+              <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #e2e8f0',
+                padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' as const,
+                  letterSpacing: '0.1em', color: '#94a3b8', margin: '0 0 0.25rem' }}>
+                  Perfil
+                </p>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.2rem' }}>
+                  Datos personales
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 1.1rem' }}>
+                  Información principal de tu cuenta
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.7rem' }}>
+                  <DataCard label="Nombre"   value={user.nombre ?? ''} />
+                  <DataCard label="Apellido" value={user.apellido ?? ''} />
+                  <DataCard label="Correo"   value={user.email} />
+                  <DataCard label="Teléfono" value={user.telefono ?? ''} />
                 </div>
-              </section>
+              </div>
 
-              <aside className="space-y-6">
-                <section style={{
-                  borderRadius: '2rem',
-                  border: '1px solid var(--color-border)',
-                  background: '#ffffff',
-                  padding: '1.75rem',
-                  boxShadow: 'var(--sombra-media)'
-                }}>
-                  <h3 style={{ fontSize: '1.1875rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                    Accesos rápidos
-                  </h3>
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: '#667780' }}>
-                    Ir a pedidos o revisar carrito.
-                  </p>
-
-                  <div className="mt-5 space-y-3">
-                    <Link
-                      href="/cuenta/ordenes"
-                      style={{
-                        display: 'block',
-                        borderRadius: '999px',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        paddingTop: '0.875rem',
-                        paddingBottom: '0.875rem',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: '#ffffff',
-                        background: 'var(--color-secondary)',
-                        boxShadow: '0 2px 8px rgba(28, 138, 134, 0.2)',
-                        transition: 'all 200ms ease',
-                        cursor: 'pointer'
-                      }}
-                      onMouseOver={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-secondary-700)';
-                        (e.target as HTMLElement).style.boxShadow = '0 4px 12px rgba(28, 138, 134, 0.3)';
-                      }}
-                      onMouseOut={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-secondary)';
-                        (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(28, 138, 134, 0.2)';
-                      }}
-                    >
-                      Mis órdenes
-                    </Link>
-
-                    <Link
-                      href="/carrito"
-                      style={{
-                        display: 'block',
-                        borderRadius: '999px',
-                        border: '2px solid var(--color-border)',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        paddingTop: '0.75rem',
-                        paddingBottom: '0.75rem',
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        color: 'var(--color-text)',
-                        background: '#ffffff',
-                        transition: 'all 200ms ease',
-                        cursor: 'pointer'
-                      }}
-                      onMouseOver={(e) => {
-                          (e.target as HTMLElement).style.background = 'var(--color-background)';
-                          (e.target as HTMLElement).style.borderColor = 'var(--color-secondary)';
-                      }}
-                      onMouseOut={(e) => {
-                          (e.target as HTMLElement).style.background = '#ffffff';
-                          (e.target as HTMLElement).style.borderColor = 'var(--color-border)';
-                      }}
-                    >
-                      Carrito
-                    </Link>
-                  </div>
-                </section>
-
-                <section style={{
-                  borderRadius: '2rem',
-                  border: '1px solid var(--color-border)',
-                  background: '#ffffff',
-                  padding: '1.75rem',
-                  boxShadow: 'var(--sombra-media)'
-                }}>
-                  <h3 style={{ fontSize: '1.1875rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                    Sesión
-                  </h3>
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: '#667780' }}>
-                    Sal de tu cuenta cuando termines.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    style={{
-                      marginTop: '1.25rem',
-                      width: '100%',
-                      borderRadius: '999px',
-                      border: '2px solid var(--color-border)',
-                      paddingLeft: '1rem',
-                      paddingRight: '1rem',
-                      paddingTop: '0.75rem',
-                      paddingBottom: '0.75rem',
-                      fontWeight: 700,
-                      color: 'var(--color-text)',
-                      background: '#ffffff',
-                      cursor: 'pointer',
-                      transition: 'all 200ms ease'
-                    }}
-                    onMouseOver={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-background)';
-                        (e.target as HTMLElement).style.borderColor = '#dc2626';
-                        (e.target as HTMLElement).style.color = '#dc2626';
-                    }}
-                    onMouseOut={(e) => {
-                        (e.target as HTMLElement).style.background = '#ffffff';
-                        (e.target as HTMLElement).style.borderColor = 'var(--color-border)';
-                        (e.target as HTMLElement).style.color = 'var(--color-text)';
-                    }}
-                  >
-                    Cerrar sesión
-                  </button>
-                </section>
-              </aside>
-
-              {user?.rol === 'ADMIN' ? (
-                <section style={{
-                  borderRadius: '2rem',
-                  border: '1px solid var(--color-border)',
-                  background: '#ffffff',
-                  padding: '1.75rem',
-                  boxShadow: 'var(--sombra-media)',
-                  gridColumn: '1 / -1'
-                }}>
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-                    <h3 style={{ fontSize: '1.1875rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                      Administración
-                    </h3>
+              {/* Panel admin */}
+              {user.rol === 'ADMIN' && (
+                <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #e2e8f0',
+                  padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.1rem' }}>
+                    <div>
+                      <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' as const,
+                        letterSpacing: '0.1em', color: '#94a3b8', margin: '0 0 0.25rem' }}>
+                        Administración
+                      </p>
+                      <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                        Panel de gestión
+                      </h2>
+                    </div>
                     <span style={{
-                      borderRadius: '999px',
-                      paddingLeft: '0.75rem',
-                      paddingRight: '0.75rem',
-                      paddingTop: '0.35rem',
-                      paddingBottom: '0.35rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                      background: 'var(--color-secondary)'
+                      background: 'linear-gradient(135deg, #1c8a86, #2b3a8c)', color: '#ffffff',
+                      borderRadius: '999px', padding: '0.2rem 0.8rem', fontSize: '0.65rem',
+                      fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const,
                     }}>
-                      Panel admin
+                      Admin
                     </span>
                   </div>
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: '#667780', marginBottom: '1.25rem' }}>
-                    Accede a las herramientas de gestión del marketplace.
-                  </p>
-
-                  <div className="flex flex-wrap gap-3">
-                    <Link
-                      href="/admin/pagos"
-                      style={{
-                        borderRadius: '999px',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        paddingTop: '0.625rem',
-                        paddingBottom: '0.625rem',
-                        fontWeight: 700,
-                        color: '#ffffff',
-                        background: 'var(--color-primary)',
-                        boxShadow: '0 2px 8px rgba(43, 58, 140, 0.2)',
-                        transition: 'all 200ms ease',
-                        cursor: 'pointer',
-                        display: 'inline-block'
-                      }}
-                      onMouseOver={(e) => {
-                          (e.target as HTMLElement).style.background = 'var(--color-primary-700)';
-                          (e.target as HTMLElement).style.boxShadow = '0 4px 12px rgba(43, 58, 140, 0.3)';
-                      }}
-                      onMouseOut={(e) => {
-                          (e.target as HTMLElement).style.background = 'var(--color-primary)';
-                          (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(43, 58, 140, 0.2)';
-                      }}
-                    >
-                      Pagos admin
-                    </Link>
-
-                    <Link
-                      href="/admin/ordenes"
-                      style={{
-                        borderRadius: '999px',
-                        border: '2px solid var(--color-border)',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        paddingTop: '0.5rem',
-                        paddingBottom: '0.5rem',
-                        fontWeight: 700,
-                        color: 'var(--color-text)',
-                        background: '#ffffff',
-                        transition: 'all 200ms ease',
-                        cursor: 'pointer',
-                        display: 'inline-block'
-                      }}
-                      onMouseOver={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-background)';
-                        (e.target as HTMLElement).style.borderColor = 'var(--color-secondary)';
-                      }}
-                      onMouseOut={(e) => {
-                        (e.target as HTMLElement).style.background = '#ffffff';
-                        (e.target as HTMLElement).style.borderColor = 'var(--color-border)';
-                      }}
-                    >
-                      Órdenes admin
-                    </Link>
-
-                    <Link
-                      href="/admin/productos"
-                      style={{
-                        borderRadius: '999px',
-                        border: '2px solid var(--color-border)',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        paddingTop: '0.5rem',
-                        paddingBottom: '0.5rem',
-                        fontWeight: 700,
-                        color: 'var(--color-text)',
-                        background: '#ffffff',
-                        transition: 'all 200ms ease',
-                        cursor: 'pointer',
-                        display: 'inline-block'
-                      }}
-                      onMouseOver={(e) => {
-                        (e.target as HTMLElement).style.background = 'var(--color-background)';
-                        (e.target as HTMLElement).style.borderColor = 'var(--color-secondary)';
-                      }}
-                      onMouseOut={(e) => {
-                        (e.target as HTMLElement).style.background = '#ffffff';
-                        (e.target as HTMLElement).style.borderColor = 'var(--color-border)';
-                      }}
-                    >
-                      Productos admin
-                    </Link>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.7rem' }}>
+                    {adminLinks.map((link) => (
+                      <Link key={link.href} href={link.href} style={{ textDecoration: 'none' }}>
+                        <div style={{ borderRadius: '1rem', border: '1px solid #e2e8f0', background: '#f8fafc',
+                          padding: '1rem', transition: 'all 200ms', cursor: 'pointer' }}
+                          onMouseOver={(e) => {
+                            const el = e.currentTarget as HTMLElement
+                            el.style.borderColor = '#1c8a86'; el.style.background = '#f0fdf9'
+                            el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 12px rgba(28,138,134,0.15)'
+                          }}
+                          onMouseOut={(e) => {
+                            const el = e.currentTarget as HTMLElement
+                            el.style.borderColor = '#e2e8f0'; el.style.background = '#f8fafc'
+                            el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none'
+                          }}>
+                          <p style={{ fontSize: '1.25rem', margin: '0 0 0.4rem' }}>{link.icon}</p>
+                          <p style={{ fontWeight: 700, color: '#1e293b', margin: '0 0 0.1rem', fontSize: '0.85rem' }}>
+                            {link.label}
+                          </p>
+                          <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{link.desc}</p>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                </section>
-              ) : null}
+                </div>
+              )}
             </div>
-          ) : null}
-        </div>
-      </section>
+
+            {/* Sidebar derecha */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              {/* Accesos rápidos */}
+              <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #e2e8f0',
+                padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
+                  Accesos rápidos
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 1rem' }}>
+                  Navega rápido a lo que necesitas
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {quickLinks.map((link) => (
+                    <Link key={link.href} href={link.href} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.6rem',
+                      borderRadius: '0.85rem', padding: '0.75rem 0.9rem',
+                      fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none', transition: 'all 200ms',
+                      background: link.primary ? 'linear-gradient(135deg, #1c8a86, #2b3a8c)' : '#f8fafc',
+                      color: link.primary ? '#ffffff' : '#374151',
+                      border: link.primary ? 'none' : '1px solid #e2e8f0',
+                      boxShadow: link.primary ? '0 2px 8px rgba(28,138,134,0.25)' : 'none',
+                    }}
+                    onMouseOver={(e) => {
+                      const el = e.currentTarget as HTMLElement
+                      link.primary ? (el.style.boxShadow = '0 4px 14px rgba(28,138,134,0.35)')
+                        : (el.style.background = '#f1f5f9')
+                    }}
+                    onMouseOut={(e) => {
+                      const el = e.currentTarget as HTMLElement
+                      link.primary ? (el.style.boxShadow = '0 2px 8px rgba(28,138,134,0.25)')
+                        : (el.style.background = '#f8fafc')
+                    }}>
+                      <span style={{ fontSize: '0.95rem' }}>{link.icon}</span>
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sesión */}
+              <div style={{ background: '#ffffff', borderRadius: '1.25rem', border: '1px solid #e2e8f0',
+                padding: '1.5rem', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
+                  Sesión activa
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 1rem' }}>
+                  Cierra tu sesión cuando termines
+                </p>
+                <button type="button" onClick={handleLogout} style={{
+                  width: '100%', border: '2px solid #fca5a5', borderRadius: '0.85rem',
+                  padding: '0.72rem', fontWeight: 700, fontSize: '0.875rem',
+                  color: '#dc2626', background: '#fff5f5', cursor: 'pointer', transition: 'all 200ms',
+                }}
+                onMouseOver={(e) => { const el = e.target as HTMLElement; el.style.background = '#fee2e2'; el.style.borderColor = '#ef4444' }}
+                onMouseOut={(e) => { const el = e.target as HTMLElement; el.style.background = '#fff5f5'; el.style.borderColor = '#fca5a5' }}>
+                  Cerrar sesión
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   )
 }

@@ -3,9 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { EstadoOrden, EstadoPago } from '@prisma/client'
-import { PrismaService } from '../../prisma/prisma.service'
 
+import { PrismaService } from '../../prisma/prisma.service'
+import { EstadoOrden, EstadoPago, TipoMovimientoInventario } from '@prisma/client'
 @Injectable()
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -164,52 +164,75 @@ export class PaymentsService {
   }
 
   async approvePayment(paymentId: string, observacion?: string) {
-    const pago = await this.prisma.pago.findUnique({
-      where: {
-        id: paymentId,
+  const pago = await this.prisma.pago.findUnique({
+    where: { id: paymentId },
+    include: {
+      orden: {
+        include: {
+          items: true,
+          reservas: true,
+        },
       },
-      include: {
-        orden: true,
-      },
-    })
+    },
+  })
 
-    if (!pago) {
-      throw new NotFoundException('Pago no encontrado')
-    }
-
-    const metaActual = (pago.externalMeta as Record<string, unknown> | null) ?? {}
-
-    return this.prisma.$transaction(async (tx) => {
-      const updatedPago = await tx.pago.update({
-        where: {
-          id: paymentId,
-        },
-        data: {
-          estado: EstadoPago.APROBADO,
-          externalMeta: {
-            ...metaActual,
-            revision: {
-              estado: 'APROBADO',
-              observacion: observacion ?? null,
-              revisadoEn: new Date().toISOString(),
-            },
-          },
-        },
-      })
-
-      await tx.orden.update({
-        where: {
-          id: pago.ordenId,
-        },
-        data: {
-          estado: EstadoOrden.PAGADA,
-        },
-      })
-
-      return updatedPago
-    })
+  if (!pago) {
+    throw new NotFoundException('Pago no encontrado')
   }
 
+  const metaActual = (pago.externalMeta as Record<string, unknown> | null) ?? {}
+
+  return this.prisma.$transaction(async (tx) => {
+    // 1. Aprobar el pago
+    const updatedPago = await tx.pago.update({
+      where: { id: paymentId },
+      data: {
+        estado: EstadoPago.APROBADO,
+        externalMeta: {
+          ...metaActual,
+          revision: {
+            estado: 'APROBADO',
+            observacion: observacion ?? null,
+            revisadoEn: new Date().toISOString(),
+          },
+        },
+      },
+    })
+
+    // 2. Marcar orden como PAGADA
+    await tx.orden.update({
+      where: { id: pago.ordenId },
+      data: { estado: EstadoOrden.PAGADA },
+    })
+
+    // 3. Liberar reservas y descontar stock real
+    for (const reserva of pago.orden.reservas) {
+      // Liberar la reserva
+      await tx.reservaStock.update({
+        where: { id: reserva.id },
+        data: { liberadoEn: new Date() },
+      })
+
+      // Descontar stock de la variante
+      await tx.varianteProducto.update({
+        where: { id: reserva.varianteId },
+        data: { stock: { decrement: reserva.cantidad } },
+      })
+
+      // Registrar movimiento de inventario
+      await tx.inventarioMovimiento.create({
+        data: {
+          varianteId: reserva.varianteId,
+          tipo: TipoMovimientoInventario.EGRESO,
+          cantidad: reserva.cantidad,
+          motivo: `Venta confirmada - Orden ${pago.ordenId}`,
+        },
+      })
+    }
+
+    return updatedPago
+  })
+}
   async rejectPayment(paymentId: string, observacion?: string) {
     const pago = await this.prisma.pago.findUnique({
       where: {
