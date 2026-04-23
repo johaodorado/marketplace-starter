@@ -7,6 +7,13 @@ export const validationSchema = Joi.object({
   JWT_SECRET: Joi.string().min(10).required(),
   JWT_EXPIRES_IN: Joi.string().default('7d'),
   DATABASE_URL: Joi.string().uri({ scheme: ['postgresql', 'postgres'] }).required(),
-  REDIS_URL: Joi.string().uri({ scheme: ['redis'] }).required(),
-  RABBITMQ_URL: Joi.string().required()
+
+  // Redis y RabbitMQ son opcionales — no se usan en el código actual
+  REDIS_URL: Joi.string().optional().allow(''),
+  RABBITMQ_URL: Joi.string().optional().allow(''),
+
+  // Cloudinary opcional
+  CLOUDINARY_CLOUD_NAME: Joi.string().optional().allow(''),
+  CLOUDINARY_API_KEY: Joi.string().optional().allow(''),
+  CLOUDINARY_API_SECRET: Joi.string().optional().allow(''),
 })
